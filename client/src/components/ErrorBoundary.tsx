@@ -21,7 +21,18 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    console.error('Uncaught error:', error);
+    console.error('Error Info:', errorInfo);
+    
+    // Report to error tracking service if needed
+    if (error.message !== 'Failed to fetch dynamically imported module') {
+      // Log other errors that are not related to dynamic imports
+      console.error('Critical Error:', {
+        error: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack
+      });
+    }
   }
 
   render() {

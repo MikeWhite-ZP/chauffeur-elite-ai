@@ -21,24 +21,23 @@ import { Loader2 } from "lucide-react";
 import { useUser } from "./hooks/use-user";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
-// Register service worker with improved error handling
+// Register service worker with improved error handling and type safety
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('Service Worker registration successful:', registration.scope);
-        
-        registration.addEventListener('error', (event) => {
-          console.error('Service Worker error:', event.error);
-        });
-        
-        registration.addEventListener('activate', () => {
-          console.log('Service Worker activated');
-        });
-      })
-      .catch(error => {
-        console.error('Service Worker registration failed:', error.message);
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('Service Worker registration successful:', registration.scope);
+      
+      registration.addEventListener('error', (event: ErrorEvent) => {
+        console.error('Service Worker error:', event.message);
       });
+      
+      registration.addEventListener('activate', () => {
+        console.log('Service Worker activated');
+      });
+    } catch (error) {
+      console.error('Service Worker registration failed:', error instanceof Error ? error.message : String(error));
+    }
   });
 }
 
