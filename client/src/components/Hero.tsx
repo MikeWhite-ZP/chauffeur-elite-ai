@@ -21,30 +21,10 @@ export default function Hero() {
             <h1 className="font-serif text-6xl text-white mb-6">
               Luxury Chauffeur Services
             </h1>
-            <p className="text-xl text-white/90 mb-8">
+            <p className="text-xl text-white/90">
               Experience premium transportation with our professional chauffeur services.
               Travel in style and comfort.
             </p>
-            <div className="space-y-6">
-              <div className="space-x-4">
-                <Button
-                  size="lg"
-                  asChild
-                  className="bg-white text-black hover:bg-white/90"
-                >
-                  <Link href={user ? "/book" : "/auth"}>
-                    Book Now
-                  </Link>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="bg-white text-black border-white hover:bg-white/90"
-                >
-                  Learn More
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
