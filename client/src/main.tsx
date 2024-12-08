@@ -16,6 +16,7 @@ import ContactUs from "./pages/ContactUs";
 import FAQ from "./pages/FAQ";
 import BusinessSedan from "./pages/fleet/BusinessSedan";
 import BusinessSUV from "./pages/fleet/BusinessSUV";
+import BusinessVan from "./pages/fleet/BusinessVan";
 import Navigation from "./components/Navigation";
 import { Loader2 } from "lucide-react";
 import { useUser } from "./hooks/use-user";
@@ -64,6 +65,7 @@ function Router() {
         <Route path="/about/f-a-q" component={FAQ} />
         <Route path="/fleet/business-sedan" component={BusinessSedan} />
         <Route path="/fleet/business-suv" component={BusinessSUV} />
+        <Route path="/fleet/business-van" component={BusinessVan} />
         {!user && <Route path="/auth" component={AuthPage} />}
         {user && (
           <>
