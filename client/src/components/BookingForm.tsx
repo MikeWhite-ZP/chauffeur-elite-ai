@@ -2,143 +2,98 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useLocation } from "../hooks/use-location";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "../hooks/use-user";
-import { insertBookingSchema } from "@db/schema";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 type BookingFormData = {
+  serviceType: string;
+  pickupDate: string;
+  pickupTime: string;
   pickupLocation: string;
-  dropoffLocation: string;
-  serviceClass: "Business Class" | "First Class";
-  date: string;
 };
 
 export default function BookingForm() {
-  const { register, handleSubmit, watch } = useForm<BookingFormData>();
-  const { getCurrentLocation } = useLocation();
+  const { register, handleSubmit, formState: { errors } } = useForm<BookingFormData>();
   const { toast } = useToast();
-  const { user } = useUser();
-  const queryClient = useQueryClient();
 
-  const bookingMutation = useMutation({
-    mutationFn: async (data: BookingFormData) => {
-      const response = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          userId: user?.id,
-          fare: calculateFare(data),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+  const onSubmit = async (data: BookingFormData) => {
+    try {
+      // TODO: Implement actual booking submission
+      console.log('Booking data:', data);
+      
       toast({
-        title: "Booking Confirmed",
-        description: "Your chauffeur has been booked successfully.",
+        title: "Booking Request Received",
+        description: "We'll confirm your booking shortly.",
       });
-    },
-    onError: (error) => {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to submit booking request. Please try again.",
         variant: "destructive",
       });
-    },
-  });
-
-  const calculateFare = (data: BookingFormData) => {
-    // Simple fare calculation
-    const baseRate = data.serviceClass === "First Class" ? 150 : 100;
-    return baseRate;
+    }
   };
 
-  const serviceClass = watch("serviceClass");
-
   return (
-    <form onSubmit={handleSubmit((data) => bookingMutation.mutate(data))} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="pickupLocation">Pickup Location</Label>
-        <div className="flex gap-2">
-          <Input
-            id="pickupLocation"
-            {...register("pickupLocation", { required: true })}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={async () => {
-              const location = await getCurrentLocation();
-              if (location) {
-                // Set the input value
-              }
-            }}
-          >
-            Current Location
-          </Button>
-        </div>
+        <Label htmlFor="serviceType">Service Type</Label>
+        <Select {...register("serviceType", { required: true })}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select service type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="business">Business Class</SelectItem>
+            <SelectItem value="executive">Executive Class</SelectItem>
+            <SelectItem value="luxury">Luxury Class</SelectItem>
+          </SelectContent>
+        </Select>
+        {errors.serviceType && (
+          <p className="text-sm text-red-500">Service type is required</p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="dropoffLocation">Dropoff Location</Label>
+        <Label htmlFor="pickupDate">Pick-Up Date</Label>
         <Input
-          id="dropoffLocation"
-          {...register("dropoffLocation", { required: true })}
+          type="date"
+          id="pickupDate"
+          {...register("pickupDate", { required: true })}
+          min={new Date().toISOString().split('T')[0]}
         />
+        {errors.pickupDate && (
+          <p className="text-sm text-red-500">Pick-up date is required</p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <Label>Service Class</Label>
-        <RadioGroup defaultValue="Business Class">
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem
-              value="Business Class"
-              id="business"
-              {...register("serviceClass")}
-            />
-            <Label htmlFor="business">Business Class</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem
-              value="First Class"
-              id="first"
-              {...register("serviceClass")}
-            />
-            <Label htmlFor="first">First Class</Label>
-          </div>
-        </RadioGroup>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="date">Date and Time</Label>
+        <Label htmlFor="pickupTime">Pick-Up Time</Label>
         <Input
-          id="date"
-          type="datetime-local"
-          {...register("date", { required: true })}
+          type="time"
+          id="pickupTime"
+          {...register("pickupTime", { required: true })}
         />
+        {errors.pickupTime && (
+          <p className="text-sm text-red-500">Pick-up time is required</p>
+        )}
       </div>
 
-      <div className="pt-4 border-t">
-        <div className="flex justify-between mb-4">
-          <span>Estimated Fare</span>
-          <span className="font-semibold">
-            ${calculateFare({ serviceClass } as BookingFormData)}
-          </span>
-        </div>
-        <Button type="submit" className="w-full" disabled={bookingMutation.isPending}>
-          {bookingMutation.isPending ? "Processing..." : "Confirm Booking"}
-        </Button>
+      <div className="space-y-2">
+        <Label htmlFor="pickupLocation">Pick-Up Location</Label>
+        <Input
+          type="text"
+          id="pickupLocation"
+          placeholder="Enter pick-up address"
+          {...register("pickupLocation", { required: true })}
+        />
+        {errors.pickupLocation && (
+          <p className="text-sm text-red-500">Pick-up location is required</p>
+        )}
       </div>
+
+      <Button type="submit" className="w-full bg-primary text-white hover:bg-primary/90">
+        Request Booking
+      </Button>
     </form>
   );
 }
