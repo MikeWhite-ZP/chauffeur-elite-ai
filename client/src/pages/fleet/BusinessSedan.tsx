@@ -25,7 +25,7 @@ export default function BusinessSedan() {
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
             <div className="relative h-full w-full">
               <img
-                src="/sedan-luxury.webp"
+                src="/sedan-luxury.png"
                 alt="Mercedes-Benz Business Sedan"
                 className="w-full h-full object-cover rounded-lg"
                 onError={(e) => {
