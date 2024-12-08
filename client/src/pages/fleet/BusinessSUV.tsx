@@ -27,7 +27,7 @@ export default function BusinessSUV() {
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
             <div className="relative h-full w-full">
               <img
-                src="/SUV.png"
+                src="https://usaluxurylimo.com/wp-content/uploads/2023/12/subarbunn.png"
                 alt="Chevrolet Suburban Business SUV"
                 className="w-full h-full object-cover rounded-lg"
                 onError={(e) => {
