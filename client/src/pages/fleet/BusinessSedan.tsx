@@ -24,14 +24,25 @@ export default function BusinessSedan() {
           {/* Vehicle Image Section */}
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
             <div className="relative h-full w-full">
-              <img
-                src="https://usaluxurylimo.com/wp-content/uploads/2023/12/mercedes-ss.png"
-                alt="Mercedes-Benz Business Sedan"
-                className="w-full h-full object-cover rounded-lg brightness-90"
-                onError={(e) => {
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1549767742-ccfdeb07b71d";
-                }}
-              />
+              <div className="relative w-full h-full">
+                <img
+                  src="https://usaluxurylimo.com/wp-content/uploads/2023/12/mercedes-ss.png"
+                  alt="Mercedes-Benz Business Sedan"
+                  className="w-full h-full object-cover rounded-lg brightness-90 transition-opacity duration-300"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1549767742-ccfdeb07b71d";
+                    e.currentTarget.alt = "Luxury Business Sedan - Alternative Image";
+                  }}
+                  onLoad={(e) => {
+                    e.currentTarget.classList.remove('opacity-0');
+                  }}
+                  style={{ opacity: 0 }}
+                />
+                <div className="absolute inset-0 bg-black/20 rounded-lg" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin opacity-0 transition-opacity duration-300" />
+                </div>
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             </div>
           </section>
