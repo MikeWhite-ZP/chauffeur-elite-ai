@@ -61,11 +61,15 @@ export default function Navigation({ user }: NavigationProps) {
   };
 
   return (
-    <nav className="bg-black/95 text-white py-4 fixed w-full z-50">
+    <nav className="bg-black/95 text-white py-2 fixed w-full z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="font-serif text-2xl">
-            LuxDrive
+          <Link href="/" className="flex items-center">
+            <img
+              src="/logo-red_200x200px.png"
+              alt="USA Luxury Limo"
+              className="h-12 w-auto"
+            />
           </Link>
 
           {/* Mobile menu button */}

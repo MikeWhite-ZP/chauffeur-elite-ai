@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 declare const self: ServiceWorkerGlobalScope;
 
-const CACHE_NAME = 'luxdrive-cache-v1';
+const CACHE_NAME = 'usa-luxury-limo-cache-v1';
 
 const CACHED_URLS = [
   '/',
