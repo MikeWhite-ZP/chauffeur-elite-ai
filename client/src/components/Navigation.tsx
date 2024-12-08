@@ -85,13 +85,13 @@ export default function Navigation({ user }: NavigationProps) {
                     About Us
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-48 p-2 bg-black/95">
+                    <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
                       {menuItems.aboutUs.map((item) => (
                         <li key={item}>
                           <NavigationMenuLink asChild>
                             <Link
                               href={`/about/${item.toLowerCase().replace(/\s+/g, '-')}`}
-                              className="block p-2 hover:bg-white/10"
+                              className="block p-2 text-white hover:bg-white/20 transition-colors"
                             >
                               {item}
                             </Link>
@@ -107,13 +107,13 @@ export default function Navigation({ user }: NavigationProps) {
                     Our Fleet
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-48 p-2 bg-black/95">
+                    <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
                       {menuItems.fleet.map((item) => (
                         <li key={item}>
                           <NavigationMenuLink asChild>
                             <Link
                               href={`/fleet/${item.toLowerCase().replace(/\s+/g, '-')}`}
-                              className="block p-2 hover:bg-white/10"
+                              className="block p-2 text-white hover:bg-white/20 transition-colors"
                             >
                               {item}
                             </Link>
@@ -129,13 +129,13 @@ export default function Navigation({ user }: NavigationProps) {
                     Our Services
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-64 p-2 bg-black/95">
+                    <ul className="grid w-64 p-2 bg-black/95 border border-white/20">
                       {menuItems.services.map((item) => (
                         <li key={item}>
                           <NavigationMenuLink asChild>
                             <Link
                               href={`/services/${item.toLowerCase().replace(/\s+/g, '-')}`}
-                              className="block p-2 hover:bg-white/10"
+                              className="block p-2 text-white hover:bg-white/20 transition-colors"
                             >
                               {item}
                             </Link>
@@ -151,13 +151,13 @@ export default function Navigation({ user }: NavigationProps) {
                     Blog
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-48 p-2 bg-black/95">
+                    <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
                       {menuItems.blog.map((item) => (
                         <li key={item}>
                           <NavigationMenuLink asChild>
                             <Link
                               href={`/blog/${item.toLowerCase().replace(/\s+/g, '-')}`}
-                              className="block p-2 hover:bg-white/10"
+                              className="block p-2 text-white hover:bg-white/20 transition-colors"
                             >
                               {item}
                             </Link>
