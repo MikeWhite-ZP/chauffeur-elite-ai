@@ -14,7 +14,7 @@ import { Menu } from "lucide-react";
 import { useState } from "react";
 
 type NavigationProps = {
-  user: User | null;
+  user: User | null | undefined;
 };
 
 export default function Navigation({ user }: NavigationProps) {

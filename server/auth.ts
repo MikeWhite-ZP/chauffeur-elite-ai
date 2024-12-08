@@ -5,7 +5,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { users, insertUserSchema, type User } from "@db/schema";
+import { users, insertUserSchema, type User as DbUser } from "@db/schema";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
 
@@ -30,7 +30,14 @@ const crypto = {
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User {
+      id: number;
+      username: string;
+      password: string;
+      fullName?: string | null;
+      email?: string | null;
+      phoneNumber?: string | null;
+    }
   }
 }
 
@@ -73,14 +80,14 @@ export function setupAuth(app: Express) {
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
-        return done(null, user);
+        return done(null, user as Express.User);
       } catch (err) {
         return done(err);
       }
     })
   );
 
-  passport.serializeUser((user: User, done) => {
+  passport.serializeUser((user: Express.User, done) => {
     done(null, user.id);
   });
 
@@ -91,7 +98,12 @@ export function setupAuth(app: Express) {
         .from(users)
         .where(eq(users.id, id))
         .limit(1);
-      done(null, user);
+      
+      if (!user) {
+        return done(new Error('User not found'));
+      }
+      
+      done(null, user as Express.User);
     } catch (err) {
       done(err);
     }
@@ -140,7 +152,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: Error, user: User, info: IVerifyOptions) => {
+    passport.authenticate("local", (err: Error, user: Express.User, info: IVerifyOptions) => {
       if (err) {
         return next(err);
       }
