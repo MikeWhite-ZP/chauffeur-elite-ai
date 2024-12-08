@@ -24,7 +24,7 @@ export default function Navigation({ user }: NavigationProps) {
   const menuItems = {
     aboutUs: [
       "Who Is The USA Luxury Limo",
-      "Terms & Conditions",
+      "Terms and Conditions",
       "Testimonials",
       "Contact Us",
       "F.A.Q",
