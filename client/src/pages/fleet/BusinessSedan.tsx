@@ -25,11 +25,11 @@ export default function BusinessSedan() {
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
             <div className="relative h-full w-full">
               <img
-                src="/sedan-luxury.webp"
+                src="https://usaluxurylimo.com/wp-content/uploads/2023/12/mercedes-ss.png"
                 alt="Mercedes-Benz E-Class Business Sedan"
                 className="w-full h-full object-cover rounded-lg brightness-90"
                 onError={(e) => {
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1549767742-ccfdeb07b71d";
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1579116164724-a6a5c58b7663";
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
