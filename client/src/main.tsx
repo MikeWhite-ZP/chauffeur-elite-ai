@@ -13,6 +13,7 @@ import WhoIsUSALuxuryLimo from "./pages/WhoIsUSALuxuryLimo";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import Testimonials from "./pages/Testimonials";
 import ContactUs from "./pages/ContactUs";
+import FAQ from "./pages/FAQ";
 import Navigation from "./components/Navigation";
 import { Loader2 } from "lucide-react";
 import { useUser } from "./hooks/use-user";
@@ -49,6 +50,7 @@ function Router() {
         <Route path="/about/terms-conditions" component={TermsAndConditions} />
         <Route path="/about/testimonials" component={Testimonials} />
         <Route path="/about/contact-us" component={ContactUs} />
+        <Route path="/about/f-a-q" component={FAQ} />
         {!user && <Route path="/auth" component={AuthPage} />}
         {user && (
           <>
