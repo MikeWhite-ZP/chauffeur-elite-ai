@@ -22,18 +22,24 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Plus } from "lucide-react";
 
+const timeSchema = z.object({
+  hour: z.string().min(1, "Hour is required"),
+  minute: z.string().min(1, "Minute is required"),
+  period: z.string().min(1, "AM/PM is required"),
+});
+
 const destinationSchema = z.object({
   from: z.string().min(1, "From address is required"),
   to: z.string().min(1, "To address is required"),
   date: z.string().min(1, "Date is required"),
-  time: z.string().min(1, "Time is required"),
+  time: timeSchema,
 });
 
 const hourlySchema = z.object({
   from: z.string().min(1, "From address is required"),
   duration: z.string().min(1, "Duration is required"),
   date: z.string().min(1, "Date is required"),
-  time: z.string().min(1, "Time is required"),
+  time: timeSchema,
 });
 
 export default function BookingWidget() {
@@ -127,19 +133,65 @@ export default function BookingWidget() {
                 )}
               />
 
-              <FormField
-                control={destinationForm.control}
-                name="time"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Time</Label>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormItem>
+                <Label>Time</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <FormField
+                    control={destinationForm.control}
+                    name="time.hour"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Hour" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {[...Array(12)].map((_, i) => (
+                            <SelectItem key={i} value={String(i + 1)}>{i + 1}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FormField
+                    control={destinationForm.control}
+                    name="time.minute"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Min" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {[...Array(12)].map((_, i) => (
+                            <SelectItem key={i} value={String(i * 5)}>{String(i * 5).padStart(2, '0')}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FormField
+                    control={destinationForm.control}
+                    name="time.period"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="AM/PM" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="AM">AM</SelectItem>
+                          <SelectItem value="PM">PM</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+                <FormMessage />
+              </FormItem>
 
               <p className="text-xs text-muted-foreground">
                 Chauffeur will wait 15 minutes free of charge
@@ -210,19 +262,65 @@ export default function BookingWidget() {
                 )}
               />
 
-              <FormField
-                control={hourlyForm.control}
-                name="time"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Time</Label>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormItem>
+                <Label>Time</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <FormField
+                    control={hourlyForm.control}
+                    name="time.hour"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Hour" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {[...Array(12)].map((_, i) => (
+                            <SelectItem key={i} value={String(i + 1)}>{i + 1}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FormField
+                    control={hourlyForm.control}
+                    name="time.minute"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Min" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {[...Array(12)].map((_, i) => (
+                            <SelectItem key={i} value={String(i * 5)}>{String(i * 5).padStart(2, '0')}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FormField
+                    control={hourlyForm.control}
+                    name="time.period"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="AM/PM" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="AM">AM</SelectItem>
+                          <SelectItem value="PM">PM</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+                <FormMessage />
+              </FormItem>
 
               <Button type="submit" className="w-full">
                 Search

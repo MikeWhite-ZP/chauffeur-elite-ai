@@ -27,7 +27,7 @@ export default function Hero() {
               </p>
             </div>
             <div className="flex justify-end">
-              <div className="lg:absolute lg:right-12 lg:top-[58px] z-20">
+              <div className="lg:absolute lg:right-12 lg:top-[80px] z-20">
                 <BookingWidget />
               </div>
             </div>
