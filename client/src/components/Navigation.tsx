@@ -27,7 +27,7 @@ export default function Navigation({ user }: NavigationProps) {
       "Terms and Conditions",
       "Testimonials",
       "Contact Us",
-      "F.A.Q",
+      "F-A-Q",
     ],
     fleet: [
       "Business Sedan",
