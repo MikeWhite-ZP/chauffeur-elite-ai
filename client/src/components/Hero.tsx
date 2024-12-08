@@ -1,6 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
 import { useUser } from "../hooks/use-user";
+import BookingWidget from "./BookingWidget";
 
 export default function Hero() {
   const { user } = useUser();
@@ -17,14 +16,21 @@ export default function Hero() {
       
       <div className="relative z-10 h-full flex items-center">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <h1 className="font-serif text-6xl text-white mb-6">
-              Luxury Chauffeur Services
-            </h1>
-            <p className="text-xl text-white/90">
-              Experience premium transportation with our professional chauffeur services.
-              Travel in style and comfort.
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <h1 className="font-serif text-6xl text-white mb-6">
+                Luxury Chauffeur Services
+              </h1>
+              <p className="text-xl text-white/90">
+                Experience premium transportation with our professional chauffeur services.
+                Travel in style and comfort.
+              </p>
+            </div>
+            <div className="flex justify-end">
+              <div className="lg:absolute lg:right-12 lg:top-8 z-20">
+                <BookingWidget />
+              </div>
+            </div>
           </div>
         </div>
       </div>
