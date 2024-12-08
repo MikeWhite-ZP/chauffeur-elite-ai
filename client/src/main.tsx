@@ -9,6 +9,7 @@ import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import BookingPage from "./pages/BookingPage";
 import DashboardPage from "./pages/DashboardPage";
+import WhoIsUSALuxuryLimo from "./pages/WhoIsUSALuxuryLimo";
 import Navigation from "./components/Navigation";
 import { Loader2 } from "lucide-react";
 import { useUser } from "./hooks/use-user";
@@ -41,6 +42,7 @@ function Router() {
       <Navigation user={user} />
       <Switch>
         <Route path="/" component={HomePage} />
+        <Route path="/about/who-is-the-usa-luxury-limo" component={WhoIsUSALuxuryLimo} />
         {!user && <Route path="/auth" component={AuthPage} />}
         {user && (
           <>
