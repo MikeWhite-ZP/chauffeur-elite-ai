@@ -25,8 +25,8 @@ export default function BusinessSedan() {
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
             <div className="relative h-full w-full">
               <img
-                src="/sedan.png"
-                alt="Mercedes-Benz Business Sedan"
+                src="https://images.mercedes-benz.com/is/image/mb/MY24_E-Class_Sedan_Front_3-4_Black_1920x1080.jpg"
+                alt="Mercedes-Benz E-Class Business Sedan"
                 className="w-full h-full object-cover rounded-lg"
                 onError={(e) => {
                   e.currentTarget.src = "https://images.unsplash.com/photo-1604705528621-81b2755a320d";

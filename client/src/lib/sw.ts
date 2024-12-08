@@ -50,11 +50,12 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-self.addEventListener('sync', (event: SyncEvent) => {
-  if (event.tag === 'sync-bookings') {
-    event.waitUntil(syncBookings());
-  }
-});
+// Background sync will be implemented in a future update
+// self.addEventListener('sync', (event) => {
+//   if (event.tag === 'sync-bookings') {
+//     event.waitUntil(syncBookings());
+//   }
+// });
 
 async function syncBookings() {
   try {

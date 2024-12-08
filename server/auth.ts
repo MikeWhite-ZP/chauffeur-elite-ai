@@ -30,7 +30,7 @@ const crypto = {
 
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User extends SelectUser {}
   }
 }
 
