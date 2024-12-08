@@ -68,8 +68,9 @@ export default function Navigation({ user }: NavigationProps) {
             <img
               src="/logo-red_200x200px.png"
               alt="USA Luxury Limo"
-              className="h-12 w-auto"
+              className="h-12 w-auto mr-2"
             />
+            <span className="text-xl font-serif">USA Luxury Limo</span>
           </Link>
 
           {/* Mobile menu button */}
