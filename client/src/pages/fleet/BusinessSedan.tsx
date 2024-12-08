@@ -26,7 +26,7 @@ export default function BusinessSedan() {
             <div 
               className="absolute inset-0 bg-cover bg-center"
               style={{
-                backgroundImage: 'url(https://images.unsplash.com/photo-1621361365424-06f0e1eb5c49)',
+                backgroundImage: 'url(/sedan-luxury.webp)',
                 filter: 'brightness(0.8)'
               }}
             />
