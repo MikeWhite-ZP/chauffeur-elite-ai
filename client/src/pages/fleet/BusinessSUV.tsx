@@ -29,7 +29,7 @@ export default function BusinessSUV() {
               <img
                 src="/2024-Chevrolet-Suburban-LT-2024CHS270001_2100_01.png"
                 alt="Chevrolet Suburban Business SUV"
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-contain rounded-lg"
                 onError={(e) => {
                   e.currentTarget.src = "https://images.unsplash.com/photo-1532974297617-c0f05fe48bff";
                   e.currentTarget.alt = "Luxury Business SUV - Alternative Image";
