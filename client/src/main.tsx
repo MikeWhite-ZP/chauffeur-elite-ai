@@ -19,16 +19,26 @@ import BusinessSUV from "./pages/fleet/BusinessSUV";
 import Navigation from "./components/Navigation";
 import { Loader2 } from "lucide-react";
 import { useUser } from "./hooks/use-user";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
-// Register service worker
+// Register service worker with improved error handling
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('Service Worker registered with scope:', registration.scope);
-    } catch (error) {
-      console.error('Service Worker registration failed:', error);
-    }
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('Service Worker registration successful:', registration.scope);
+        
+        registration.addEventListener('error', (event) => {
+          console.error('Service Worker error:', event.error);
+        });
+        
+        registration.addEventListener('activate', () => {
+          console.log('Service Worker activated');
+        });
+      })
+      .catch(error => {
+        console.error('Service Worker registration failed:', error.message);
+      });
   });
 }
 
@@ -68,11 +78,16 @@ function Router() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(
+const root = document.getElementById("root");
+if (!root) throw new Error("Root element not found");
+
+createRoot(root).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <Router />
+        <Toaster />
+      </QueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );

@@ -3,9 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>USA Luxury Limo - Premium Chauffeur Service</title>
+    <meta name="description" content="Premium chauffeur booking platform with luxury vehicles and professional service" />
+    <!-- Preload critical assets -->
+    <link rel="preload" as="script" href="/src/main.tsx" />
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      window.addEventListener('error', function(event) {
+        console.error('Runtime error:', event.error);
+      });
+    </script>
+    <script type="module" src="/src/main.tsx" defer onerror="console.error('Failed to load main script')"></script>
   </body>
 </html>
