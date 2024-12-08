@@ -24,29 +24,15 @@ export default function BusinessSedan() {
           {/* Vehicle Image Section */}
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
             <div className="relative h-full w-full">
-              <div className="relative w-full h-full">
-                <img
-                  src="/sedan.png"
-                  alt="Cadillac Business Sedan"
-                  className="w-full h-full object-cover rounded-lg brightness-90 transition-all duration-300"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1604705528621-81b2755a320d";
-                    e.currentTarget.alt = "Luxury Business Sedan - Alternative Image";
-                  }}
-                  onLoad={(e) => {
-                    e.currentTarget.classList.remove('opacity-0');
-                    const spinner = e.currentTarget.parentElement?.querySelector('.loading-spinner');
-                    if (spinner) {
-                      spinner.classList.add('opacity-0');
-                    }
-                  }}
-                  style={{ opacity: 0 }}
-                />
-                <div className="absolute inset-0 bg-black/20 rounded-lg" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="loading-spinner w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin transition-opacity duration-300" />
-                </div>
-              </div>
+              <img
+                src="/sedan.png"
+                alt="Mercedes-Benz Business Sedan"
+                className="w-full h-full object-cover rounded-lg"
+                onError={(e) => {
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1604705528621-81b2755a320d";
+                  e.currentTarget.alt = "Luxury Business Sedan - Alternative Image";
+                }}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             </div>
           </section>
