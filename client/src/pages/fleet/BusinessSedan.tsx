@@ -23,13 +23,17 @@ export default function BusinessSedan() {
         <div className="max-w-6xl mx-auto space-y-12">
           {/* Vehicle Image Section */}
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
-            <div 
-              className="absolute inset-0 bg-cover bg-center"
-              style={{
-                backgroundImage: 'url(/sedan-luxury.webp)',
-                filter: 'brightness(0.8)'
-              }}
-            />
+            <div className="relative h-full w-full">
+              <img
+                src="/sedan-luxury.webp"
+                alt="Luxury Business Sedan"
+                className="w-full h-full object-cover rounded-lg brightness-90"
+                onError={(e) => {
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1621361365424-06f0e1eb5c49";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+            </div>
           </section>
 
           {/* Description Section */}
