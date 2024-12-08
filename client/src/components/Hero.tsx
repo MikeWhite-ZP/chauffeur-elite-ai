@@ -38,7 +38,7 @@ export default function Hero() {
               <Button
                 size="lg"
                 variant="outline"
-                className="text-white border-white hover:bg-white/10"
+                className="bg-white text-black border-white hover:bg-white/90"
               >
                 Learn More
               </Button>
