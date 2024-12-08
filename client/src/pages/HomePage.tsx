@@ -1,8 +1,14 @@
+import { useEffect } from "react";
 import Hero from "../components/Hero";
 import ServiceTiers from "../components/ServiceTiers";
 import VehicleGallery from "../components/VehicleGallery";
+import { loadExternalScript } from "../lib/utils";
 
 export default function HomePage() {
+  useEffect(() => {
+    loadExternalScript('https://book.mylimobiz.com/v4/widgets/widget-loader.js')
+      .catch(console.error);
+  }, []);
   return (
     <div className="min-h-screen">
       <Hero />

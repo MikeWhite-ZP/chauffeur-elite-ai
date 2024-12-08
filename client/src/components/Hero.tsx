@@ -25,23 +25,36 @@ export default function Hero() {
               Experience premium transportation with our professional chauffeur services.
               Travel in style and comfort.
             </p>
-            <div className="space-x-4">
-              <Button
-                size="lg"
-                asChild
-                className="bg-white text-black hover:bg-white/90"
-              >
-                <Link href={user ? "/book" : "/auth"}>
-                  Book Now
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-white text-black border-white hover:bg-white/90"
-              >
-                Learn More
-              </Button>
+            <div className="space-y-6">
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
+                <a 
+                  href="https://book.mylimobiz.com/v4/uniontx" 
+                  data-ores-widget="quickres" 
+                  data-ores-alias="uniontx" 
+                  data-redirect-url="https://usaluxurylimo.com/book-now/"
+                  className="text-white text-xl hover:text-gray-200"
+                >
+                  Online Reservations
+                </a>
+              </div>
+              <div className="space-x-4">
+                <Button
+                  size="lg"
+                  asChild
+                  className="bg-white text-black hover:bg-white/90"
+                >
+                  <Link href={user ? "/book" : "/auth"}>
+                    Book Now
+                  </Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="bg-white text-black border-white hover:bg-white/90"
+                >
+                  Learn More
+                </Button>
+              </div>
             </div>
           </div>
         </div>
