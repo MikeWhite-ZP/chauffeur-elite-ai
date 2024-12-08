@@ -1,6 +1,11 @@
 /// <reference lib="webworker" />
 declare const self: ServiceWorkerGlobalScope;
 
+interface SyncEvent extends Event {
+  tag: string;
+  waitUntil(promise: Promise<any>): void;
+}
+
 const CACHE_NAME = 'usa-luxury-limo-cache-v1';
 
 const CACHED_URLS = [
@@ -26,16 +31,13 @@ self.addEventListener('fetch', (event) => {
         return response;
       }
 
-      // Clone the request because it can only be used once
       const fetchRequest = event.request.clone();
 
       return fetch(fetchRequest).then((response) => {
-        // Check if we received a valid response
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
 
-        // Clone the response because it can only be used once
         const responseToCache = response.clone();
 
         caches.open(CACHE_NAME).then((cache) => {
@@ -48,7 +50,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-self.addEventListener('sync', (event) => {
+self.addEventListener('sync', (event: SyncEvent) => {
   if (event.tag === 'sync-bookings') {
     event.waitUntil(syncBookings());
   }
