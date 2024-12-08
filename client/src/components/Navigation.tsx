@@ -94,7 +94,7 @@ export default function Navigation({ user }: NavigationProps) {
                         <li key={item}>
                           <NavigationMenuLink asChild>
                             <Link
-                              href={`/about/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                              href={`/about/${item === "Terms and Conditions" ? "terms-conditions" : item.toLowerCase().replace(/\s+/g, '-')}`}
                               className="block p-2 text-white hover:bg-white/20 transition-colors"
                             >
                               {item}
@@ -215,7 +215,7 @@ export default function Navigation({ user }: NavigationProps) {
                 {menuItems.aboutUs.map((item) => (
                   <Link
                     key={item}
-                    href={`/about/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                    href={`/about/${item === "Terms and Conditions" ? "terms-conditions" : item.toLowerCase().replace(/\s+/g, '-')}`}
                     className="block pl-4 py-1 hover:text-gray-300"
                   >
                     {item}
