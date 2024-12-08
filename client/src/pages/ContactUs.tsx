@@ -34,17 +34,8 @@ export default function ContactUs() {
         <div className="max-w-4xl mx-auto space-y-12">
           {/* Contact Information Section */}
           <section className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-6">
+            <div className="space-y-8">
               <h2 className="font-serif text-3xl mb-4">Get in Touch</h2>
-              <div>
-                <h3 className="font-serif text-xl mb-2">Location</h3>
-                <p className="text-gray-300">12026 Fairquarter Ln</p>
-                <p className="text-gray-300">Pinehurst, TX 77362</p>
-              </div>
-              <div>
-                <h3 className="font-serif text-xl mb-2">Phone</h3>
-                <p className="text-gray-300">+1 (832) 410-8400</p>
-              </div>
               <div>
                 <h3 className="font-serif text-xl mb-2">Email</h3>
                 <p className="text-gray-300">info@usaluxurylimo.com</p>
