@@ -27,8 +27,8 @@ export default function BusinessSUV() {
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
             <div className="relative h-full w-full">
               <img
-                src="https://images.cadillac.com/is/image/cadillac/escalade-my24-design-L-03?fmt=webp"
-                alt="Cadillac Escalade Business SUV"
+                src="/SUV.png"
+                alt="Chevrolet Suburban Business SUV"
                 className="w-full h-full object-cover rounded-lg"
                 onError={(e) => {
                   e.currentTarget.src = "https://images.unsplash.com/photo-1532974297617-c0f05fe48bff";
