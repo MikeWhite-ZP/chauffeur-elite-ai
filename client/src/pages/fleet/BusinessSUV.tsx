@@ -25,6 +25,10 @@ export default function BusinessSUV() {
         <div className="max-w-6xl mx-auto space-y-12">
           {/* Vehicle Image Section */}
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
+            <div className="absolute right-8 top-4 w-[calc(100%-200px)] max-w-md z-10 bg-white/10 backdrop-blur-sm rounded-lg p-4 shadow-xl">
+              {/* Booking widget placeholder - to be implemented */}
+              <div className="aspect-video bg-black/20 rounded-lg"></div>
+            </div>
             <div className="relative h-full w-full">
               <img
                 src="https://usaluxurylimo.com/wp-content/uploads/2023/12/subarbunn.png"
