@@ -26,8 +26,8 @@ export default function BusinessSedan() {
             <div className="relative h-full w-full">
               <div className="relative w-full h-full">
                 <img
-                  src="/sedan-luxury.webp"
-                  alt="Mercedes-Benz Business Sedan"
+                  src="/sedan.png"
+                  alt="Cadillac Business Sedan"
                   className="w-full h-full object-cover rounded-lg brightness-90 transition-all duration-300"
                   onError={(e) => {
                     e.currentTarget.src = "https://images.unsplash.com/photo-1604705528621-81b2755a320d";
