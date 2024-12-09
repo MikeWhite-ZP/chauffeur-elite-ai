@@ -35,7 +35,7 @@ export default function BusinessVan() {
                 onError={(e) => {
                   const img = e.currentTarget;
                   img.onerror = null; // Prevent infinite loop
-                  img.src = "/logo-red_200x200px.png";
+                  img.src = "/2025-S-Class.jpg";
                   img.alt = "Mercedes-Benz Sprinter - Fallback Image";
                 }}
               />
