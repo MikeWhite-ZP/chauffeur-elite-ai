@@ -31,10 +31,12 @@ export default function BusinessVan() {
               <img
                 src="/Mercedes-Sprinter-01-798x466.jpg"
                 alt="Mercedes-Benz Sprinter Business Van"
-                className="w-full h-full object-contain rounded-lg"
+                className="w-full h-full object-cover rounded-lg"
                 onError={(e) => {
-                  e.currentTarget.src = "/Mercedes-Sprinter-01-798x466.jpg";
-                  e.currentTarget.alt = "Mercedes-Benz Sprinter - Luxury Business Van";
+                  const img = e.currentTarget;
+                  img.onerror = null; // Prevent infinite loop
+                  img.src = "/logo-red_200x200px.png";
+                  img.alt = "Mercedes-Benz Sprinter - Fallback Image";
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -73,16 +75,16 @@ export default function BusinessVan() {
               Experience first-class group transportation with our Executive Business Van service.
             </p>
             <div className="flex justify-center gap-4">
-              <Link href="/book">
-                <Button className="bg-white text-black hover:bg-white/90">
+              <Button asChild>
+                <Link href="/book" className="bg-white text-black hover:bg-white/90">
                   Book Now
-                </Button>
-              </Link>
-              <Link href="/about/contact-us">
-                <Button variant="outline" className="border-white text-white hover:bg-white/10">
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/about/contact-us" className="border-white text-white hover:bg-white/10">
                   Contact Us
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </section>
         </div>
