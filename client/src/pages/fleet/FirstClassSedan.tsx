@@ -48,10 +48,10 @@ export default function FirstClassSedan() {
             <div className="space-y-6">
               <h2 className="font-serif text-3xl">Ultimate Luxury Travel</h2>
               <p className="text-lg leading-relaxed text-gray-300">
-                Experience the epitome of luxury transportation with our First Class Sedan service. The Mercedes-Benz S-Class, renowned for its unparalleled comfort and sophistication, sets the standard for executive travel. Each journey is crafted to provide an exceptional blend of luxury, comfort, and professional service.
+                Experience unparalleled luxury with our First Class Sedan service in Houston. The Mercedes-Benz S-Class, our flagship vehicle, represents the pinnacle of automotive excellence and sophistication. With its sleek design and superior comfort, it's the perfect choice for executives, VIPs, and those who demand the very best in ground transportation.
               </p>
               <p className="text-lg leading-relaxed text-gray-300">
-                Our First Class Sedan service is perfect for business executives, VIP transfers, and special occasions where making a sophisticated impression is paramount. The S-Class's iconic design, coupled with its state-of-the-art technology and premium amenities, ensures a journey that's as memorable as your destination.
+                Each First Class Sedan in our fleet is meticulously maintained and equipped with the latest technology and comfort features. From the supple leather seating to the advanced climate control system, every detail has been carefully considered to ensure your complete comfort and satisfaction. Whether you're heading to an important business meeting, a special event, or require airport transportation, our First Class Sedan service guarantees a journey that's as exceptional as your destination.
               </p>
             </div>
 

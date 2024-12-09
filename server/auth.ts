@@ -137,6 +137,9 @@ export function setupAuth(app: Express) {
         .values({
           username,
           password: hashedPassword,
+          fullName: "",  // Default empty string for required fields
+          email: "",
+          phoneNumber: ""
         })
         .returning();
 
