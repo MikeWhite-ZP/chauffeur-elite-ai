@@ -30,11 +30,13 @@ export default function FirstClassSedan() {
             <div className="relative h-full w-full">
               <img
                 src="/2025-S-Class.jpg"
-                alt="2025 Mercedes-Benz S-Class Luxury Sedan"
+                alt="2025 Mercedes-Benz S-Class"
                 className="w-full h-full object-cover rounded-lg"
                 onError={(e) => {
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1549399542-7e3f8b79c341";
-                  e.currentTarget.alt = "Luxury Sedan - Alternative Image";
+                  const img = e.currentTarget;
+                  img.onerror = null; // Prevent infinite loop
+                  img.src = "/2025-S-Class.jpg";
+                  img.alt = "Mercedes-Benz S-Class - Fallback Image";
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
