@@ -29,12 +29,12 @@ export default function BusinessVan() {
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
             <div className="relative h-full w-full">
               <img
-                src="/business-van-luxury.png"
-                alt="Mercedes-Benz Business Van"
+                src="/Mercedes-Sprinter-01-798x466.jpg"
+                alt="Mercedes-Benz Sprinter Business Van"
                 className="w-full h-full object-contain rounded-lg"
                 onError={(e) => {
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b";
-                  e.currentTarget.alt = "Luxury Business Van - Alternative Image";
+                  e.currentTarget.src = "/Mercedes-Sprinter-01-798x466.jpg";
+                  e.currentTarget.alt = "Mercedes-Benz Sprinter - Luxury Business Van";
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
