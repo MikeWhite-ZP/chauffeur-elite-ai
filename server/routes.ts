@@ -19,7 +19,7 @@ export function registerRoutes(app: Express) {
         .select()
         .from(bookings)
         .where(eq(bookings.userId, req.user!.id))
-        .orderBy(bookings.date);
+        .orderBy(bookings.pickupDate);
 
       res.json(userBookings);
     } catch (error) {
@@ -41,8 +41,12 @@ export function registerRoutes(app: Express) {
           userId: req.user!.id,
           pickupLocation: req.body.pickupLocation,
           dropoffLocation: req.body.dropoffLocation,
-          serviceClass: req.body.serviceClass,
-          date: new Date(req.body.date),
+          serviceType: req.body.serviceType,
+          pickupDate: new Date(req.body.date),
+          vehicleType: req.body.vehicleType,
+          passengerCount: req.body.passengerCount || 1,
+          status: 'pending',
+          stops: req.body.stops || [],
           fare: req.body.fare,
         })
         .returning();

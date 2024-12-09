@@ -24,7 +24,7 @@ export default function DashboardPage() {
             <Card key={booking.id}>
               <CardHeader>
                 <CardTitle className="font-serif text-2xl">
-                  {format(new Date(booking.date), "PPP")}
+                  {format(new Date(booking.pickupDate), "PPP")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -39,7 +39,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Service Class</p>
-                    <p>{booking.serviceClass}</p>
+                    <p>{booking.serviceType}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Fare</p>
