@@ -22,25 +22,8 @@ import { Loader2 } from "lucide-react";
 import { useUser } from "./hooks/use-user";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
-// Register service worker with improved error handling and type safety
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('Service Worker registration successful:', registration.scope);
-      
-      registration.addEventListener('error', (event: ErrorEvent) => {
-        console.error('Service Worker error:', event.message);
-      });
-      
-      registration.addEventListener('activate', () => {
-        console.log('Service Worker activated');
-      });
-    } catch (error) {
-      console.error('Service Worker registration failed:', error instanceof Error ? error.message : String(error));
-    }
-  });
-}
+// Service worker registration is temporarily disabled to address stability issues
+// Will be re-implemented in a future update with proper offline support
 
 function Router() {
   const { user, isLoading } = useUser();
@@ -79,10 +62,21 @@ function Router() {
   );
 }
 
-const root = document.getElementById("root");
-if (!root) throw new Error("Root element not found");
+// Get root element
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Root element not found");
 
-createRoot(root).render(
+// Ensure we only create one root
+let root: ReturnType<typeof createRoot>;
+try {
+  root = createRoot(rootElement);
+} catch (e) {
+  console.error("Error creating root:", e);
+  throw e;
+}
+
+// Render the app
+root.render(
   <StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -90,5 +84,5 @@ createRoot(root).render(
         <Toaster />
       </QueryClientProvider>
     </ErrorBoundary>
-  </StrictMode>,
+  </StrictMode>
 );

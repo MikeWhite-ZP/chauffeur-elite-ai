@@ -4,15 +4,17 @@ import { Link } from "wouter";
 export default function BusinessVan() {
   const features = [
     "Professional chauffeur service",
-    "Extended passenger capacity",
-    "Premium leather seating",
-    "Ample luggage space",
-    "WiFi connectivity",
-    "Device charging ports",
-    "Climate-controlled cabin",
+    "Extended passenger capacity (up to 14)",
+    "Premium captain chairs with leather upholstery",
+    "Extensive luggage compartment",
+    "High-speed WiFi connectivity",
+    "Multiple USB charging ports",
+    "Tri-zone climate control system",
     "Privacy glass windows",
-    "Comfortable seating arrangement",
-    "Easy entry and exit"
+    "Individual reading lights",
+    "High roof for easy movement",
+    "Entertainment system",
+    "Comfortable armrests"
   ];
 
   return (
@@ -44,10 +46,10 @@ export default function BusinessVan() {
             <div className="space-y-6">
               <h2 className="font-serif text-3xl">Group Travel Excellence</h2>
               <p className="text-lg leading-relaxed text-gray-300">
-                Experience unmatched comfort and sophistication with our premium Business Van service. Perfect for corporate groups, executive teams, or luxury group travel, our spacious vans combine exceptional comfort with professional elegance.
+                Experience ultimate group luxury with our premium Business Van service. Designed for corporate teams, executive groups, and VIP transportation, our spacious luxury vans combine exceptional comfort with sophisticated elegance, ensuring your entire group travels in first-class style.
               </p>
               <p className="text-lg leading-relaxed text-gray-300">
-                With extended passenger capacity and ample luggage space, our business vans ensure that your entire group travels together in style. The thoughtfully designed interior provides both comfort and functionality for an exceptional travel experience.
+                Our meticulously maintained business vans feature extended passenger capacity with premium captain chairs, creating a mobile executive lounge perfect for both business meetings and comfortable travel. The thoughtfully designed interior offers ample headroom, generous legroom, and sophisticated amenities for an unparalleled group transportation experience.
               </p>
             </div>
 
@@ -68,7 +70,7 @@ export default function BusinessVan() {
           <section className="text-center space-y-6">
             <h2 className="font-serif text-3xl">Ready to Book?</h2>
             <p className="text-lg text-gray-300">
-              Experience premium group transportation with our Business Van service.
+              Experience first-class group transportation with our Executive Business Van service.
             </p>
             <div className="flex justify-center gap-4">
               <Link href="/book">
