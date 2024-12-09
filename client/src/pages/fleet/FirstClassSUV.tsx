@@ -4,17 +4,19 @@ import { Link } from "wouter";
 export default function FirstClassSUV() {
   const features = [
     "Professional chauffeur service",
-    "Premium leather captain chairs",
+    "Luxurious extended SUV fleet",
+    "Premium leather seating",
     "Extended passenger capacity",
-    "Ambient LED lighting",
     "Advanced climate control",
-    "High-end entertainment system",
+    "Entertainment system",
+    "Premium sound system",
     "Privacy glass windows",
-    "Enhanced sound insulation",
-    "Wireless device charging",
-    "High-speed WiFi connectivity",
-    "Premium refreshment center",
-    "Extended luggage space"
+    "WiFi connectivity",
+    "USB charging ports",
+    "Complimentary refreshments",
+    "Ample luggage space",
+    "24/7 customer service",
+    "Flight monitoring"
   ];
 
   return (
@@ -48,10 +50,10 @@ export default function FirstClassSUV() {
             <div className="space-y-6">
               <h2 className="font-serif text-3xl">Ultimate Luxury SUV Experience</h2>
               <p className="text-lg leading-relaxed text-gray-300">
-                Experience unmatched luxury with our First Class SUV service. The Cadillac Escalade, our premium SUV offering, represents the perfect blend of sophistication, comfort, and commanding presence. Ideal for executives, VIP transportation, and special occasions, our First Class SUVs deliver an exceptional travel experience.
+                Experience the epitome of luxury transportation with our First Class SUV service in Houston. Our premium fleet, featuring vehicles like the Cadillac Escalade and Lincoln Navigator, combines sophisticated style with exceptional comfort. These vehicles are perfect for corporate executives, VIP transportation, special events, and luxury airport transfers.
               </p>
               <p className="text-lg leading-relaxed text-gray-300">
-                Each First Class SUV is equipped with premium amenities and maintained to the highest standards. From the plush leather seating to the state-of-the-art entertainment system, every detail is designed to provide maximum comfort and convenience. Whether you're heading to an important business meeting, special event, or require airport transportation, our First Class SUV service ensures a journey that matches your prestigious standards.
+                Our First Class SUVs are meticulously maintained and equipped with premium amenities to ensure your complete satisfaction. From the spacious leather interiors to the state-of-the-art entertainment systems, every detail is carefully considered. We provide 24/7 customer service, professional chauffeurs, and flight monitoring for airport transfers, ensuring a seamless and luxurious travel experience throughout Houston and surrounding areas.
               </p>
             </div>
 
