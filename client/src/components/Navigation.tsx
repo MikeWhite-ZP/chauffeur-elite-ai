@@ -33,7 +33,7 @@ export default function Navigation({ user }: NavigationProps) {
       "Business Sedan",
       "Business SUV",
       "Business VAN",
-      "First-Class Sedan",
+      "First Class Sedan",
       "First Class SUV",
     ],
     services: [
