@@ -29,14 +29,14 @@ export default function FirstClassSedan() {
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
             <div className="relative h-full w-full">
               <img
-                src="/2025-S-Class.jpg"
+                src={"/2025-S-Class.jpg"}
                 alt="2025 Mercedes-Benz S-Class"
                 className="w-full h-full object-cover rounded-lg"
                 onError={(e) => {
                   const img = e.currentTarget;
                   img.onerror = null; // Prevent infinite loop
-                  img.src = "/2025-S-Class.jpg";
-                  img.alt = "Mercedes-Benz S-Class - Fallback Image";
+                  img.src = "https://images.unsplash.com/photo-1678728994157-0bcb3309200f";
+                  img.alt = "Mercedes-Benz S-Class - Alternative Image";
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
