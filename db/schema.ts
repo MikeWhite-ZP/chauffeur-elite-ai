@@ -1,4 +1,5 @@
 import { pgTable, text, integer, timestamp, decimal, boolean, json } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -21,8 +22,13 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Add self-referential constraint after table definition to avoid circular dependency
-users.referredBy.references(() => users.id, { onDelete: "set null" });
+// Define relations after table definitions
+export const usersRelations = relations(users, ({ one }) => ({
+  referredByUser: one(users, {
+    fields: [users.referredBy],
+    references: [users.id],
+  }),
+}));
 
 // Fleet Categories Table
 export const fleetCategories = pgTable("fleet_categories", {

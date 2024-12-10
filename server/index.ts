@@ -9,7 +9,7 @@ import { setupWebSocket } from "./websocket";
 declare global {
   namespace Express {
     interface Request {
-      user?: import("@db/schema").User;
+      user?: import("@db/schema").User | null;
       isAuthenticated(): boolean;
     }
   }
@@ -64,8 +64,21 @@ app.use((req, res, next) => {
   registerRoutes(app);
   const server = createServer(app);
   
-  // Set up WebSocket server
-  const wss = new WebSocketServer({ server });
+  // Set up WebSocket server with noServer option to handle upgrade manually
+  const wss = new WebSocketServer({ 
+    noServer: true,
+    path: "/ws"
+  });
+  
+  // Handle upgrade manually
+  server.on('upgrade', (request, socket, head) => {
+    if (request.url?.startsWith('/ws')) {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
+    }
+  });
+  
   setupWebSocket(wss);
 
   interface AppError extends Error {

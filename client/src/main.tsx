@@ -12,7 +12,11 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: false,
-      retry: false
+      retry: false,
+      refetchInterval: (query) => {
+        // Enable real-time updates for tracking-related queries
+        return query.queryKey[0] === 'tracking' ? 1000 : false;
+      }
     },
   },
 });
