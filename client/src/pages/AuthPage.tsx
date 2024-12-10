@@ -102,10 +102,17 @@ export default function AuthPage() {
                     <RadioGroupItem value="driver" id="driver" />
                     <Label htmlFor="driver">Driver</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="admin" id="admin" />
-                    <Label htmlFor="admin">Admin</Label>
-                  </div>
+                  {isLogin && (
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="admin" id="admin" />
+                      <Label htmlFor="admin">Admin</Label>
+                    </div>
+                  )}
+                  {!isActive && formData.role === "driver" && (
+                    <p className="text-sm text-yellow-600 mt-2">
+                      Note: Driver accounts require admin approval before activation.
+                    </p>
+                  )}
                 </RadioGroup>
               </div>
               {!isLogin && (

@@ -41,6 +41,33 @@ declare global {
   }
 }
 
+async function createDefaultAdmin() {
+  try {
+    const [existingAdmin] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, 'MikeWhite'))
+      .limit(1);
+
+    if (!existingAdmin) {
+      const hashedPassword = await crypto.hash('Erka75810916?!');
+      await db.insert(users).values({
+        username: 'MikeWhite',
+        password: hashedPassword,
+        fullName: 'Mike White',
+        email: 'admin@usaluxurylimo.com',
+        phoneNumber: '1234567890',
+        role: 'admin',
+        isActive: true,
+        isApproved: true
+      });
+      console.log('Default admin account created');
+    }
+  } catch (error) {
+    console.error('Error creating default admin:', error);
+  }
+}
+
 export function setupAuth(app: Express) {
   const MemoryStore = createMemoryStore(session);
   const sessionSettings: session.SessionOptions = {
@@ -52,6 +79,9 @@ export function setupAuth(app: Express) {
       checkPeriod: 86400000, // prune expired entries every 24h
     }),
   };
+
+  // Create default admin account
+  createDefaultAdmin();
 
   if (app.get("env") === "production") {
     app.set("trust proxy", 1);
@@ -137,9 +167,12 @@ export function setupAuth(app: Express) {
         .values({
           username,
           password: hashedPassword,
-          fullName: "",  // Default empty string for required fields
-          email: "",
-          phoneNumber: ""
+          fullName: req.body.fullName || "",
+          email: req.body.email || "",
+          phoneNumber: req.body.phoneNumber || "",
+          role: req.body.role || "passenger",
+          isActive: req.body.role === "driver" ? false : true,
+          isApproved: req.body.role === "driver" ? false : true
         })
         .returning();
 

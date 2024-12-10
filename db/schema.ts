@@ -5,12 +5,14 @@ import { z } from "zod";
 // Users Table
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  username: text("username").unique().notNull(),
   password: text("password").notNull(),
   fullName: text("full_name").notNull(),
   email: text("email").unique().notNull(),
   phoneNumber: text("phone_number").notNull(),
-  role: text("role").notNull().default('passenger'), // admin, driver, passenger
+  role: text("role", { enum: ['admin', 'driver', 'passenger'] }).notNull().default('passenger'),
   isActive: boolean("is_active").default(true),
+  isApproved: boolean("is_approved").default(false),
   referralCode: text("referral_code").unique(),
   referredBy: integer("referred_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
