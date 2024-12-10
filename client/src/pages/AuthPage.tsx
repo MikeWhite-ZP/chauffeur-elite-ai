@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "../hooks/use-user";
 
@@ -14,7 +15,8 @@ export default function AuthPage() {
     password: "",
     fullName: "",
     email: "",
-    phoneNumber: ""
+    phoneNumber: "",
+    role: "passenger"
   });
   const { login, register } = useUser();
   const { toast } = useToast();
@@ -82,6 +84,29 @@ export default function AuthPage() {
                   onChange={handleInputChange}
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>User Type</Label>
+                <RadioGroup
+                  defaultValue="passenger"
+                  name="role"
+                  value={formData.role}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
+                  className="flex flex-col space-y-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="passenger" id="passenger" />
+                    <Label htmlFor="passenger">Passenger</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="driver" id="driver" />
+                    <Label htmlFor="driver">Driver</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="admin" id="admin" />
+                    <Label htmlFor="admin">Admin</Label>
+                  </div>
+                </RadioGroup>
               </div>
               {!isLogin && (
                 <>

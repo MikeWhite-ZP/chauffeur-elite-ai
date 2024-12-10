@@ -178,13 +178,7 @@ export default function Navigation({ user }: NavigationProps) {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                <NavigationMenuItem>
-                  <Link href="/book">
-                    <Button className="bg-white text-black hover:bg-white/90">
-                      Book Online
-                    </Button>
-                  </Link>
-                </NavigationMenuItem>
+                
 
                 {user ? (
                   <NavigationMenuItem>
@@ -269,11 +263,7 @@ export default function Navigation({ user }: NavigationProps) {
               </div>
 
               <div className="pt-4 space-y-2">
-                <Link href="/book">
-                  <Button className="w-full bg-white text-black hover:bg-white/90">
-                    Book Online
-                  </Button>
-                </Link>
+                
 
                 {user ? (
                   <Button
