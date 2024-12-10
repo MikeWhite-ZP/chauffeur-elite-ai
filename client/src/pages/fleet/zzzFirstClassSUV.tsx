@@ -3,22 +3,22 @@ import { Link } from "wouter";
 
 export default function FirstClassSUV() {
   const features = [
-    "Professional uniformed chauffeurs",
-    "Latest model Cadillac Escalade",
-    "Plush leather interior",
-    "Spacious seating for up to 7 passengers",
-    "Advanced climate control system",
-    "Premium entertainment system",
-    "High-end sound system",
-    "Tinted privacy windows",
-    "High-speed WiFi connectivity",
-    "Multiple USB charging ports",
-    "Complimentary bottled water",
-    "Extended luggage capacity",
-    "24/7 customer support",
-    "Real-time flight tracking",
-    "Full vehicle insurance",
-    "Meet & greet service"
+    "Luxury SUV Service in Houston",
+    "Latest Model Vehicles",
+    "Professional Uniformed Chauffeurs",
+    "Corporate Transportation",
+    "Airport Transfer Service",
+    "Spacious Leather Interior",
+    "Advanced Climate Control",
+    "Premium Sound System",
+    "High-Speed WiFi",
+    "USB Charging Ports",
+    "Tinted Windows",
+    "Complimentary Water",
+    "Extended Luggage Space",
+    "Meet & Greet Service",
+    "24/7 Support",
+    "Real-time Flight Tracking"
   ];
 
   return (
@@ -34,13 +34,13 @@ export default function FirstClassSUV() {
             <div className="relative h-full w-full">
               <img
                 src="/2024-Cadillac-Escalade.png"
-                alt="2024 Cadillac Escalade"
-                className="w-full h-full object-contain rounded-lg bg-white/5"
+                alt="2024 Cadillac Escalade - Luxury SUV Service"
+                className="w-full h-full object-contain rounded-lg"
                 onError={(e) => {
                   const img = e.currentTarget;
                   img.onerror = null;
                   img.src = "https://images.unsplash.com/photo-1532974297617-c0f05fe48bff";
-                  img.alt = "Luxury First Class SUV - Alternative Image";
+                  img.alt = "Luxury SUV - Alternative Image";
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -50,20 +50,23 @@ export default function FirstClassSUV() {
           {/* Description Section */}
           <section className="grid md:grid-cols-2 gap-12">
             <div className="space-y-6">
-              <h2 className="font-serif text-3xl">Ultimate SUV Luxury</h2>
+              <h2 className="font-serif text-3xl">Luxury SUV Transportation</h2>
               <p className="text-lg leading-relaxed text-gray-300">
-                Experience unparalleled luxury with USA Luxury Limo's First Class SUV service in Houston. Our flagship Cadillac Escalade offers the perfect blend of sophistication, comfort, and cutting-edge technology, making it the ideal choice for executives, VIPs, and those who demand the very best in ground transportation.
+                Welcome to USA Luxury Limo's First Class SUV service in Houston, where we redefine luxury ground transportation. Our fleet features the latest models of Cadillac Escalade and Lincoln Navigator, providing an unmatched blend of style, comfort, and sophistication for our distinguished clients.
               </p>
               <p className="text-lg leading-relaxed text-gray-300">
-                Our First Class SUVs are meticulously maintained and equipped with premium amenities to ensure your complete satisfaction. From the sumptuous leather interiors to the state-of-the-art entertainment systems, every detail has been carefully considered to provide you with an exceptional travel experience.
+                Perfect for corporate executives, airport transfers, and special occasions, our First Class SUVs offer spacious interiors that comfortably accommodate up to 7 passengers. Each vehicle is meticulously maintained and equipped with premium amenities to ensure an exceptional travel experience.
               </p>
               <p className="text-lg leading-relaxed text-gray-300">
-                Whether you're heading to important meetings, special events, or require airport transportation, our professional chauffeurs ensure a smooth, comfortable journey throughout Houston and surrounding areas. With our 24/7 availability and commitment to excellence, we guarantee a luxury experience that exceeds your expectations.
+                Our professional chauffeurs are more than just drivers – they're experienced professionals who understand the importance of punctuality, discretion, and superior service. Available 24/7, they ensure safe, comfortable journeys throughout Houston and surrounding areas.
+              </p>
+              <p className="text-lg leading-relaxed text-gray-300">
+                For airport transfers, we provide complimentary flight tracking and meet & greet service. Our commitment to excellence extends beyond transportation – we create memorable experiences with attention to every detail, from the moment you book until you reach your destination.
               </p>
             </div>
 
             <div className="bg-white/5 p-8 rounded-lg border border-white/10">
-              <h3 className="font-serif text-2xl mb-6">Features & Amenities</h3>
+              <h3 className="font-serif text-2xl mb-6">Features & Services</h3>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {features.map((feature, index) => (
                   <li key={index} className="flex items-center text-gray-300">
@@ -79,7 +82,7 @@ export default function FirstClassSUV() {
           <section className="text-center space-y-6">
             <h2 className="font-serif text-3xl">Experience First Class Travel</h2>
             <p className="text-lg text-gray-300">
-              Book your luxury SUV service today and discover the perfect blend of comfort and sophistication.
+              Book your luxury SUV service today and discover the perfect blend of comfort, style, and professional service.
             </p>
             <div className="flex justify-center gap-4">
               <Button asChild>
