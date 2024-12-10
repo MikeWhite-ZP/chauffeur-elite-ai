@@ -22,6 +22,7 @@ const formatUrl = (name: string) => {
 };
 
 const formatFleetUrl = (name: string) => formatUrl(name);
+
 export default function Navigation({ user }: NavigationProps) {
   const { logout } = useUser();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -63,6 +64,27 @@ export default function Navigation({ user }: NavigationProps) {
       "Hotel",
       "Travel",
     ],
+    admin: [
+      "Driver Approvals",
+      "Booking Management",
+      "User Management",
+      "Fleet Management",
+      "Reports & Analytics"
+    ],
+    driver: [
+      "My Assignments",
+      "Schedule",
+      "Route History",
+      "Performance",
+      "Earnings"
+    ],
+    passenger: [
+      "My Bookings",
+      "Favorites",
+      "Payment Methods",
+      "Travel History",
+      "Preferences"
+    ]
   };
 
   return (
@@ -178,7 +200,77 @@ export default function Navigation({ user }: NavigationProps) {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                
+                {user && user.role === 'admin' && (
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger className="text-white hover:text-gray-300 bg-transparent">
+                      Administration
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
+                        {menuItems.admin.map((item) => (
+                          <li key={item}>
+                            <NavigationMenuLink asChild>
+                              <Link
+                                href={`/admin/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                                className="block p-2 text-white hover:bg-white/20 transition-colors"
+                              >
+                                {item}
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                        ))}
+                      </ul>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                )}
+
+                {user && user.role === 'driver' && (
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger className="text-white hover:text-gray-300 bg-transparent">
+                      Driver Portal
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
+                        {menuItems.driver.map((item) => (
+                          <li key={item}>
+                            <NavigationMenuLink asChild>
+                              <Link
+                                href={`/driver/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                                className="block p-2 text-white hover:bg-white/20 transition-colors"
+                              >
+                                {item}
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                        ))}
+                      </ul>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                )}
+
+                {user && user.role === 'passenger' && (
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger className="text-white hover:text-gray-300 bg-transparent">
+                      My Account
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
+                        {menuItems.passenger.map((item) => (
+                          <li key={item}>
+                            <NavigationMenuLink asChild>
+                              <Link
+                                href={`/passenger/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                                className="block p-2 text-white hover:bg-white/20 transition-colors"
+                              >
+                                {item}
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                        ))}
+                      </ul>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                )}
 
                 {user ? (
                   <NavigationMenuItem>
@@ -262,9 +354,52 @@ export default function Navigation({ user }: NavigationProps) {
                 ))}
               </div>
 
-              <div className="pt-4 space-y-2">
-                
+              {user && user.role === 'admin' && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Administration</h3>
+                  {menuItems.admin.map((item) => (
+                    <Link
+                      key={item}
+                      href={`/admin/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                      className="block pl-4 py-1 hover:text-gray-300"
+                    >
+                      {item}
+                    </Link>
+                  ))}
+                </div>
+              )}
 
+              {user && user.role === 'driver' && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Driver Portal</h3>
+                  {menuItems.driver.map((item) => (
+                    <Link
+                      key={item}
+                      href={`/driver/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                      className="block pl-4 py-1 hover:text-gray-300"
+                    >
+                      {item}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              {user && user.role === 'passenger' && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold">My Account</h3>
+                  {menuItems.passenger.map((item) => (
+                    <Link
+                      key={item}
+                      href={`/passenger/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                      className="block pl-4 py-1 hover:text-gray-300"
+                    >
+                      {item}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-4 space-y-2">
                 {user ? (
                   <Button
                     variant="ghost"
