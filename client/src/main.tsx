@@ -90,14 +90,8 @@ function Router() {
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element not found");
 
-// Ensure we only create one root
-let root: ReturnType<typeof createRoot>;
-try {
-  root = createRoot(rootElement);
-} catch (e) {
-  console.error("Error creating root:", e);
-  throw e;
-}
+// Create root only if it doesn't exist
+const root = createRoot(rootElement);
 
 // Render the app
 root.render(

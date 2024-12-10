@@ -138,6 +138,11 @@ export const bookings = pgTable("bookings", {
   status: text("status").default("pending"), // pending, confirmed, in_progress, completed, cancelled
   paymentStatus: text("payment_status").default("pending"),
   paymentMethod: text("payment_method"),
+  trackingEnabled: boolean("tracking_enabled").default(false),
+  lastKnownLatitude: decimal("last_known_latitude", { precision: 10, scale: 7 }),
+  lastKnownLongitude: decimal("last_known_longitude", { precision: 10, scale: 7 }),
+  lastLocationUpdate: timestamp("last_location_update"),
+  estimatedArrivalTime: timestamp("estimated_arrival_time"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -152,6 +157,19 @@ export const reviews = pgTable("reviews", {
   rating: integer("rating").notNull(),
   comment: text("comment"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Location tracking table
+export const locationTracking = pgTable("location_tracking", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  chauffeurId: integer("chauffeur_id").references(() => chauffeurs.id),
+  bookingId: integer("booking_id").references(() => bookings.id),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
+  timestamp: timestamp("timestamp").defaultNow(),
+  status: text("status", { enum: ['active', 'inactive'] }).notNull().default('active'),
+  speed: decimal("speed", { precision: 5, scale: 2 }),
+  heading: decimal("heading", { precision: 5, scale: 2 }),
 });
 
 // Export schemas and types
@@ -199,3 +217,8 @@ export const insertReviewSchema = createInsertSchema(reviews);
 export const selectReviewSchema = createSelectSchema(reviews);
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type Review = z.infer<typeof selectReviewSchema>;
+
+export const insertLocationTrackingSchema = createInsertSchema(locationTracking);
+export const selectLocationTrackingSchema = createSelectSchema(locationTracking);
+export type InsertLocationTracking = z.infer<typeof insertLocationTrackingSchema>;
+export type LocationTracking = z.infer<typeof selectLocationTrackingSchema>;
