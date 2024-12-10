@@ -16,7 +16,7 @@ export default function AuthPage() {
     fullName: "",
     email: "",
     phoneNumber: "",
-    role: "passenger"
+    role: "passenger" as "admin" | "driver" | "passenger"
   });
   const { login, register } = useUser();
   const { toast } = useToast();
@@ -108,7 +108,7 @@ export default function AuthPage() {
                       <Label htmlFor="admin">Admin</Label>
                     </div>
                   )}
-                  {!isActive && formData.role === "driver" && (
+                  {!isLogin && formData.role === "driver" && (
                     <p className="text-sm text-yellow-600 mt-2">
                       Note: Driver accounts require admin approval before activation.
                     </p>

@@ -2,6 +2,8 @@ import { pgTable, text, integer, timestamp, decimal, boolean, json } from "drizz
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export type UserRole = 'admin' | 'driver' | 'passenger';
+
 // Users Table
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -10,11 +12,11 @@ export const users = pgTable("users", {
   fullName: text("full_name").notNull(),
   email: text("email").unique().notNull(),
   phoneNumber: text("phone_number").notNull(),
-  role: text("role", { enum: ['admin', 'driver', 'passenger'] }).notNull().default('passenger'),
+  role: text("role", { enum: ['admin', 'driver', 'passenger'] as const }).notNull().default('passenger'),
   isActive: boolean("is_active").default(true),
   isApproved: boolean("is_approved").default(false),
   referralCode: text("referral_code").unique(),
-  referredBy: integer("referred_by").references(() => users.id),
+  referredBy: integer("referred_by").references((): ReturnType<typeof integer> => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

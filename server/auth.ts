@@ -106,10 +106,20 @@ export function setupAuth(app: Express) {
         if (!user) {
           return done(null, false, { message: "Incorrect username." });
         }
+        
         const isMatch = await crypto.compare(password, user.password);
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
+
+        if (user.role === 'driver' && !user.isApproved) {
+          return done(null, false, { message: "Your driver account is pending approval. Please contact admin." });
+        }
+
+        if (!user.isActive) {
+          return done(null, false, { message: "Your account is currently inactive." });
+        }
+
         return done(null, user as Express.User);
       } catch (err) {
         return done(err);
