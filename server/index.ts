@@ -4,12 +4,13 @@ import { setupVite, serveStatic } from "./vite";
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
 import { setupWebSocket } from "./websocket";
+import { setupAuth } from "./auth";
 
 // Extend express Request type to include user
 declare global {
   namespace Express {
     interface Request {
-      user?: import("@db/schema").User | null;
+      user?: Express.User;
       isAuthenticated(): boolean;
     }
   }
@@ -61,25 +62,32 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Setup authentication
+  setupAuth(app);
+  
+  // Register API routes after auth setup
   registerRoutes(app);
+  
   const server = createServer(app);
   
-  // Set up WebSocket server with noServer option to handle upgrade manually
+  // Set up WebSocket server with proper error handling
   const wss = new WebSocketServer({ 
-    noServer: true,
-    path: "/ws"
+    server,
+    path: "/ws",
+    clientTracking: true
   });
   
-  // Handle upgrade manually
-  server.on('upgrade', (request, socket, head) => {
-    if (request.url?.startsWith('/ws')) {
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit('connection', ws, request);
-      });
-    }
-  });
-  
+  // Initialize WebSocket handling
   setupWebSocket(wss);
+  
+  // Log WebSocket server status
+  wss.on('listening', () => {
+    log('WebSocket server is ready');
+  });
+  
+  wss.on('error', (error) => {
+    console.error('WebSocket server error:', error);
+  });
 
   interface AppError extends Error {
     status?: number;
