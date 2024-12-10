@@ -88,6 +88,7 @@ function Router() {
             {user.role === 'passenger' && (
               <>
                 <Route path="/passenger/my-bookings" component={lazy(() => import('./pages/passenger/MyBookings'))} />
+                <Route path="/passenger/track/:bookingId" component={lazy(() => import('./pages/passenger/TrackRide'))} />
               </>
             )}
           </>
