@@ -89,7 +89,7 @@ export default function Navigation({ user }: NavigationProps) {
 
   return (
     <nav className="bg-black/95 text-white py-2 fixed w-full z-50">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 relative z-50">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center">
             <img
@@ -116,8 +116,8 @@ export default function Navigation({ user }: NavigationProps) {
                   <NavigationMenuTrigger className="text-white hover:text-gray-300 bg-transparent">
                     About Us
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
+                  <NavigationMenuContent className="absolute top-full left-0 mt-2">
+                    <ul className="grid w-48 p-2 bg-black/95 border border-white/20 rounded-lg shadow-lg animate-in slide-in-from-top-2">
                       {menuItems.aboutUs.map((item) => (
                         <li key={item}>
                           <NavigationMenuLink asChild>
@@ -138,8 +138,8 @@ export default function Navigation({ user }: NavigationProps) {
                   <NavigationMenuTrigger className="text-white hover:text-gray-300 bg-transparent">
                     Our Fleet
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
+                  <NavigationMenuContent className="absolute top-full left-0 mt-2">
+                    <ul className="grid w-48 p-2 bg-black/95 border border-white/20 rounded-lg shadow-lg animate-in slide-in-from-top-2">
                       {menuItems.fleet.map((item) => (
                         <li key={item}>
                           <NavigationMenuLink asChild>
@@ -160,8 +160,8 @@ export default function Navigation({ user }: NavigationProps) {
                   <NavigationMenuTrigger className="text-white hover:text-gray-300 bg-transparent">
                     Our Services
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-64 p-2 bg-black/95 border border-white/20">
+                  <NavigationMenuContent className="absolute top-full left-0 mt-2">
+                    <ul className="grid w-64 p-2 bg-black/95 border border-white/20 rounded-lg shadow-lg animate-in slide-in-from-top-2">
                       {menuItems.services.map((item) => (
                         <li key={item}>
                           <NavigationMenuLink asChild>
@@ -182,8 +182,8 @@ export default function Navigation({ user }: NavigationProps) {
                   <NavigationMenuTrigger className="text-white hover:text-gray-300 bg-transparent">
                     Blog
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
+                  <NavigationMenuContent className="absolute top-full left-0 mt-2">
+                    <ul className="grid w-48 p-2 bg-black/95 border border-white/20 rounded-lg shadow-lg animate-in slide-in-from-top-2">
                       {menuItems.blog.map((item) => (
                         <li key={item}>
                           <NavigationMenuLink asChild>
@@ -205,8 +205,8 @@ export default function Navigation({ user }: NavigationProps) {
                     <NavigationMenuTrigger className="text-white hover:text-gray-300 bg-transparent">
                       Administration
                     </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
+                    <NavigationMenuContent className="absolute top-full left-0 mt-2">
+                      <ul className="grid w-48 p-2 bg-black/95 border border-white/20 rounded-lg shadow-lg animate-in slide-in-from-top-2">
                         {menuItems.admin.map((item) => (
                           <li key={item}>
                             <NavigationMenuLink asChild>
@@ -229,8 +229,8 @@ export default function Navigation({ user }: NavigationProps) {
                     <NavigationMenuTrigger className="text-white hover:text-gray-300 bg-transparent">
                       Driver Portal
                     </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
+                    <NavigationMenuContent className="absolute top-full left-0 mt-2">
+                      <ul className="grid w-48 p-2 bg-black/95 border border-white/20 rounded-lg shadow-lg animate-in slide-in-from-top-2">
                         {menuItems.driver.map((item) => (
                           <li key={item}>
                             <NavigationMenuLink asChild>
@@ -253,8 +253,8 @@ export default function Navigation({ user }: NavigationProps) {
                     <NavigationMenuTrigger className="text-white hover:text-gray-300 bg-transparent">
                       My Account
                     </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <ul className="grid w-48 p-2 bg-black/95 border border-white/20">
+                    <NavigationMenuContent className="absolute top-full left-0 mt-2">
+                      <ul className="grid w-48 p-2 bg-black/95 border border-white/20 rounded-lg shadow-lg animate-in slide-in-from-top-2">
                         {menuItems.passenger.map((item) => (
                           <li key={item}>
                             <NavigationMenuLink asChild>
