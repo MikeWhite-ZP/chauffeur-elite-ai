@@ -17,9 +17,11 @@ type NavigationProps = {
   user: User | null | undefined;
 };
 
-const formatFleetUrl = (name: string) => {
-  return name.toLowerCase().replace(/\s+/g, '-');
+const formatUrl = (name: string) => {
+  return name.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and');
 };
+
+const formatFleetUrl = (name: string) => formatUrl(name);
 export default function Navigation({ user }: NavigationProps) {
   const { logout } = useUser();
   const [isMenuOpen, setIsMenuOpen] = useState(false);

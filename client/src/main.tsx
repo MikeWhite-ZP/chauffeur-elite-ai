@@ -18,6 +18,7 @@ import BusinessSedan from "./pages/fleet/BusinessSedan";
 import BusinessSUV from "./pages/fleet/BusinessSUV";
 import BusinessVan from "./pages/fleet/BusinessVan";
 import FirstClassSedan from "./pages/fleet/FirstClassSedan";
+import { default as FirstClassSUV } from "./pages/fleet/first-class-suv";
 import Navigation from "./components/Navigation";
 import { Loader2 } from "lucide-react";
 import { useUser } from "./hooks/use-user";
@@ -51,6 +52,7 @@ function Router() {
         <Route path="/fleet/business-suv" component={BusinessSUV} />
         <Route path="/fleet/business-van" component={BusinessVan} />
         <Route path="/fleet/first-class-sedan" component={FirstClassSedan} />
+        <Route path="/fleet/first-class-suv" component={FirstClassSUV} />
         {!user && <Route path="/auth" component={AuthPage} />}
         {user && (
           <>
