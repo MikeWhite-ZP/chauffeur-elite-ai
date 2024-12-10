@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { StrictMode, lazy } from "react";
 import { createRoot } from "react-dom/client";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import "./index.css";
@@ -58,6 +58,26 @@ function Router() {
           <>
             <Route path="/book" component={BookingPage} />
             <Route path="/dashboard" component={DashboardPage} />
+            {user.role === 'admin' && (
+              <>
+                <Route path="/admin/driver-approvals" component={lazy(() => import('./pages/admin/DriverApprovals'))} />
+                <Route path="/admin/booking-management" component={lazy(() => import('./pages/admin/BookingManagement'))} />
+                <Route path="/admin/user-management" component={lazy(() => import('./pages/admin/UserManagement'))} />
+                <Route path="/admin/fleet-management" component={lazy(() => import('./pages/admin/FleetManagement'))} />
+                <Route path="/admin/reports-and-analytics" component={lazy(() => import('./pages/admin/ReportsAndAnalytics'))} />
+              </>
+            )}
+            {user.role === 'driver' && (
+              <>
+                <Route path="/driver/my-assignments" component={lazy(() => import('./pages/driver/MyAssignments'))} />
+                <Route path="/driver/schedule" component={lazy(() => import('./pages/driver/Schedule'))} />
+              </>
+            )}
+            {user.role === 'passenger' && (
+              <>
+                <Route path="/passenger/my-bookings" component={lazy(() => import('./pages/passenger/MyBookings'))} />
+              </>
+            )}
           </>
         )}
         <Route>404 Page Not Found</Route>
