@@ -43,7 +43,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Fare</p>
-                    <p>${Number(booking.fare).toFixed(2)}</p>
+                    <p>${Number(booking.totalFare).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Status</p>

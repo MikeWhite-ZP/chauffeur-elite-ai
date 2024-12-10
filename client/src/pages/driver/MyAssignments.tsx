@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import LocationTracker from "@/components/LocationTracker";
 
 interface Assignment {
   id: number;
@@ -68,12 +69,33 @@ export default function MyAssignments() {
                 <div className="space-y-2">
                   <Button
                     onClick={() => {
-                      // TODO: Implement navigation feature
+                      if ("geolocation" in navigator) {
+                        navigator.geolocation.getCurrentPosition((position) => {
+                          const { latitude, longitude } = position.coords;
+                          window.open(
+                            `https://www.google.com/maps/dir/?api=1&destination=${assignment.dropoffLocation}&origin=${assignment.pickupLocation}`,
+                            '_blank'
+                          );
+                        });
+                      }
                     }}
                   >
                     Start Navigation
                   </Button>
-                  <Button variant="outline">Contact Passenger</Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      window.location.href = `tel:${assignment.passengerPhone}`;
+                    }}
+                  >
+                    Call Passenger
+                  </Button>
+                  {assignment.status === 'in_progress' && (
+                    <LocationTracker 
+                      bookingId={assignment.id}
+                      isActive={assignment.status === 'in_progress'}
+                    />
+                  )}
                 </div>
               </div>
             ))}

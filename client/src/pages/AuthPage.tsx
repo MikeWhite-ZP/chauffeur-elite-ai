@@ -91,7 +91,7 @@ export default function AuthPage() {
                   defaultValue="passenger"
                   name="role"
                   value={formData.role}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
+                  onValueChange={(value: "admin" | "driver" | "passenger") => setFormData(prev => ({ ...prev, role: value }))}
                   className="flex flex-col space-y-1"
                 >
                   <div className="flex items-center space-x-2">

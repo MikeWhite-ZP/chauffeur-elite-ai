@@ -59,8 +59,12 @@ export default function ReportsAndAnalytics() {
               ${data?.revenue.total.toFixed(2)}
             </div>
             <div className="text-sm text-gray-500">
-              {data?.revenue.growth >= 0 ? "+" : ""}
-              {data?.revenue.growth}% from last month
+              {data?.revenue?.growth !== undefined && (
+                <>
+                  {data.revenue.growth >= 0 ? "+" : ""}
+                  {data.revenue.growth}% from last month
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
