@@ -17,25 +17,26 @@ export function useLocationTracking(bookingId?: number) {
 
   // Initialize WebSocket connection
   useEffect(() => {
-    if (!user) return;
+    if (!user || !bookingId) return;
 
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
-    const websocket = new WebSocket(wsUrl);
+    let websocket: WebSocket | null = null;
+    const connectWebSocket = () => {
+      const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
+      websocket = new WebSocket(wsUrl);
 
-    websocket.onopen = () => {
-      websocket.send(JSON.stringify({
-        type: 'init',
-        userId: user.id,
-        role: user.role
-      }));
+      websocket.onopen = () => {
+        if (!websocket) return;
+        websocket.send(JSON.stringify({
+          type: 'init',
+          userId: user.id,
+          role: user.role
+        }));
 
-      if (bookingId) {
         websocket.send(JSON.stringify({
           type: 'subscribe_tracking',
           bookingId
         }));
-      }
-    };
+      };
 
     websocket.onmessage = (event) => {
       try {
@@ -56,9 +57,23 @@ export function useLocationTracking(bookingId?: number) {
     setWs(websocket);
 
     return () => {
-      websocket.close();
+      if (websocket) {
+        websocket.close();
+        websocket = null;
+      }
     };
   }, [user, bookingId]);
+
+  // Reconnect on connection loss
+  useEffect(() => {
+    const reconnectInterval = setInterval(() => {
+      if (ws && ws.readyState === WebSocket.CLOSED) {
+        setWs(null);
+      }
+    }, 3000);
+
+    return () => clearInterval(reconnectInterval);
+  }, [ws]);
 
   // Function to send location updates (for drivers)
   const updateLocation = useCallback(async (latitude: number, longitude: number, speed?: number, heading?: number) => {
