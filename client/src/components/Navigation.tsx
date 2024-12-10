@@ -17,6 +17,9 @@ type NavigationProps = {
   user: User | null | undefined;
 };
 
+const formatFleetUrl = (name: string) => {
+  return name.toLowerCase().replace(/\s+/g, '-');
+};
 export default function Navigation({ user }: NavigationProps) {
   const { logout } = useUser();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -117,7 +120,7 @@ export default function Navigation({ user }: NavigationProps) {
                         <li key={item}>
                           <NavigationMenuLink asChild>
                             <Link
-                              href={`/fleet/${item.toLowerCase().replace(/\s+/g, '-').replace(/\s+class/g, '-class')}`}
+                              href={`/fleet/${formatFleetUrl(item)}`}
                               className="block p-2 text-white hover:bg-white/20 transition-colors"
                             >
                               {item}
@@ -229,7 +232,7 @@ export default function Navigation({ user }: NavigationProps) {
                 {menuItems.fleet.map((item) => (
                   <Link
                     key={item}
-                    href={`/fleet/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                    href={`/fleet/${formatFleetUrl(item)}`}
                     className="block pl-4 py-1 hover:text-gray-300"
                   >
                     {item}
