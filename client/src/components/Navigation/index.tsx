@@ -12,13 +12,17 @@ import { AdminNavigation } from "./AdminNavigation";
 import { DriverNavigation } from "./DriverNavigation";
 import { PassengerNavigation } from "./PassengerNavigation";
 import type { User } from "@db/schema";
+import { useMemo } from "react";
+import { useUser } from "@/hooks/use-user";
 
 interface NavigationProps {
   user: User | null;
 }
 
 export default function Navigation({ user }: NavigationProps) {
-  const renderRoleBasedNavigation = () => {
+  const { logout } = useUser();
+
+  const roleBasedNavigation = useMemo(() => {
     if (!user) return null;
     switch (user.role) {
       case "admin":
@@ -30,9 +34,9 @@ export default function Navigation({ user }: NavigationProps) {
       default:
         return null;
     }
-  };
+  }, [user?.role]);
 
-  const renderMobileNavLinks = () => {
+  const mobileNavLinks = useMemo(() => {
     if (!user) {
       return (
         <>
@@ -129,7 +133,7 @@ export default function Navigation({ user }: NavigationProps) {
       default:
         return null;
     }
-  };
+  }, [user?.role]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -149,7 +153,7 @@ export default function Navigation({ user }: NavigationProps) {
 
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <div className="flex-1 md:flex-initial">
-            {renderRoleBasedNavigation()}
+            {roleBasedNavigation}
           </div>
 
           <div className="flex items-center space-x-2">
@@ -158,9 +162,14 @@ export default function Navigation({ user }: NavigationProps) {
                 <Button>Sign In</Button>
               </Link>
             ) : (
-              <Link href="/dashboard">
-                <Button variant="outline">Dashboard</Button>
-              </Link>
+              <>
+                <Link href="/dashboard">
+                  <Button variant="outline">Dashboard</Button>
+                </Link>
+                <Button variant="ghost" onClick={() => logout()}>
+                  Sign Out
+                </Button>
+              </>
             )}
 
             <Sheet>
@@ -178,7 +187,7 @@ export default function Navigation({ user }: NavigationProps) {
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
                 <div className="mt-4 flex flex-col space-y-2">
-                  {renderMobileNavLinks()}
+                  {mobileNavLinks}
                 </div>
               </SheetContent>
             </Sheet>

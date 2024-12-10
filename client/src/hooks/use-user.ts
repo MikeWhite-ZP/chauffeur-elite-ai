@@ -63,7 +63,10 @@ export function useUser() {
     queryKey: ['user'],
     queryFn: fetchUser,
     staleTime: Infinity,
-    retry: false
+    gcTime: Infinity,
+    retry: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false
   });
 
   const loginMutation = useMutation<RequestResult, Error, InsertUser>({
