@@ -1,7 +1,14 @@
-import { WebSocket as WS, WebSocketServer } from "ws";
+import { WebSocket as WS, WebSocketServer, RawData } from "ws";
 import { db } from "../db";
-import { locationTracking, bookings } from "@db/schema";
+import { locationTracking, bookings, type User } from "@db/schema";
 import { eq } from "drizzle-orm";
+import { Server } from "http";
+
+// Custom type for WebSocket server errors
+interface WebSocketError extends Error {
+  code?: string;
+  message: string;
+}
 
 // Message type definitions
 type MessageType = 'init' | 'subscribe_tracking' | 'location_update' | 'ping' | 'pong' | 'error' | 'connection_established' | 'init_success' | 'subscribe_success';
@@ -54,26 +61,49 @@ const clients = new Map<WS, TrackingClient>();
 
 export function setupWebSocket(wss: WebSocketServer) {
   function handleClose(ws: WS) {
+    const client = clients.get(ws);
+    if (client) {
+      console.log(`Client ${client.userId} disconnected`);
+      // Mark the client's last tracking record as inactive if it exists
+      if (client.bookingId) {
+        db.update(locationTracking)
+          .set({ status: 'inactive' })
+          .where(eq(locationTracking.bookingId, client.bookingId))
+          .catch(err => console.error('Error updating location tracking status:', err));
+      }
+    }
     clients.delete(ws);
-    console.log("Client disconnected");
   }
 
   function handleError(ws: WS, error: Error) {
     console.error("WebSocket error:", error);
+    const client = clients.get(ws);
+    if (client) {
+      console.error(`Error for client ${client.userId}:`, error);
+    }
+    
     if (ws.readyState === WS.OPEN) {
       try {
-        ws.send(JSON.stringify({ type: "error", message: error.message || "Internal server error" }));
+        ws.send(JSON.stringify({ 
+          type: "error", 
+          message: error.message || "Internal server error",
+          timestamp: new Date().toISOString()
+        }));
       } catch (e) {
         console.error("Failed to send error message:", e);
       }
     }
   }
 
-  async function handleMessage(ws: WS, message: Buffer) {
+  async function handleMessage(ws: WS, message: RawData) {
     let data: IncomingMessage;
     
     try {
-      data = JSON.parse(message.toString('utf-8'));
+      data = JSON.parse(message.toString('utf-8')) as IncomingMessage;
+      
+      if (!data || typeof data !== 'object') {
+        throw new Error("Invalid message format");
+      }
     } catch (e) {
       handleError(ws, new Error("Invalid JSON message"));
       return;

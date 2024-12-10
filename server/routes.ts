@@ -39,15 +39,16 @@ export function registerRoutes(app: Express) {
         .insert(bookings)
         .values({
           userId: req.user!.id,
+          categoryId: req.body.categoryId,
           pickupLocation: req.body.pickupLocation,
           dropoffLocation: req.body.dropoffLocation,
           serviceType: req.body.serviceType,
           pickupDate: new Date(req.body.date),
-          vehicleType: req.body.vehicleType,
           passengerCount: req.body.passengerCount || 1,
           status: 'pending',
           stops: req.body.stops || [],
-          fare: req.body.fare,
+          basePrice: req.body.basePrice,
+          totalFare: req.body.totalFare,
         })
         .returning();
 

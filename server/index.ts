@@ -5,6 +5,16 @@ import { createServer } from "http";
 import { WebSocketServer } from "ws";
 import { setupWebSocket } from "./websocket";
 
+// Extend express Request type to include user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: import("@db/schema").User;
+      isAuthenticated(): boolean;
+    }
+  }
+}
+
 function log(message: string) {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -58,7 +68,12 @@ app.use((req, res, next) => {
   const wss = new WebSocketServer({ server });
   setupWebSocket(wss);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  interface AppError extends Error {
+    status?: number;
+    statusCode?: number;
+  }
+
+  app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
     

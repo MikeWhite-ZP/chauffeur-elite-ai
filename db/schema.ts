@@ -16,10 +16,13 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").default(true),
   isApproved: boolean("is_approved").default(false),
   referralCode: text("referral_code").unique(),
-  referredBy: integer("referred_by").references((): ReturnType<typeof integer> => users.id),
+  referredBy: integer("referred_by"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Add self-referential constraint after table definition to avoid circular dependency
+users.referredBy.references(() => users.id, { onDelete: "set null" });
 
 // Fleet Categories Table
 export const fleetCategories = pgTable("fleet_categories", {
