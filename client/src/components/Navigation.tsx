@@ -117,7 +117,7 @@ export default function Navigation({ user }: NavigationProps) {
                         <li key={item}>
                           <NavigationMenuLink asChild>
                             <Link
-                              href={`/fleet/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                              href={`/fleet/${item.toLowerCase().replace(/\s+/g, '-').replace(/\s+class/g, '-class')}`}
                               className="block p-2 text-white hover:bg-white/20 transition-colors"
                             >
                               {item}
