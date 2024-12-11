@@ -1,39 +1,35 @@
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import { useLocationTracking } from '@/hooks/use-location-tracking';
-import { Icon, LatLngTuple } from 'leaflet';
-
-// Fix for default marker icon in react-leaflet
-const defaultIcon = new Icon({
-  iconUrl: '/marker-icon.png',
-  shadowUrl: '/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
 
 interface TrackingMapProps {
   bookingId: number;
-  initialPosition?: LatLngTuple;
+  initialPosition?: { lat: number; lng: number };
 }
 
-function MapUpdater({ position }: { position: LatLngTuple }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    map.setView(position, map.getZoom());
-  }, [map, position]);
-  
-  return null;
-}
+const containerStyle = {
+  width: '100%',
+  height: '500px'
+};
 
-export default function TrackingMap({ bookingId, initialPosition = [29.7604, -95.3698] }: TrackingMapProps) {
+const defaultCenter = {
+  lat: 29.7604,
+  lng: -95.3698
+};
+
+export default function TrackingMap({ 
+  bookingId, 
+  initialPosition = defaultCenter 
+}: TrackingMapProps) {
   const { location, error, isConnected } = useLocationTracking(bookingId);
-  const [position, setPosition] = useState<LatLngTuple>(initialPosition);
+  const [position, setPosition] = useState(initialPosition);
 
   useEffect(() => {
     if (location) {
-      setPosition([location.latitude, location.longitude]);
+      setPosition({
+        lat: Number(location.latitude),
+        lng: Number(location.longitude)
+      });
     }
   }, [location]);
 
@@ -49,19 +45,27 @@ export default function TrackingMap({ bookingId, initialPosition = [29.7604, -95
           <p className="text-destructive">{error}</p>
         </div>
       )}
-      <MapContainer
-        center={position}
-        zoom={13}
-        scrollWheelZoom={false}
-        style={{ height: '100%', width: '100%' }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        <Marker position={position} icon={defaultIcon} />
-        <MapUpdater position={position} />
-      </MapContainer>
+      <LoadScript googleMapsApiKey={process.env.GOOGLE_MAPS_API_KEY || ''}>
+        <GoogleMap
+          mapContainerStyle={containerStyle}
+          center={position}
+          zoom={13}
+          options={{
+            zoomControl: true,
+            streetViewControl: false,
+            mapTypeControl: false,
+            fullscreenControl: false,
+          }}
+        >
+          <Marker
+            position={position}
+            icon={{
+              url: '/car-marker.png',
+              scaledSize: new window.google.maps.Size(32, 32),
+            }}
+          />
+        </GoogleMap>
+      </LoadScript>
     </div>
   );
 }
