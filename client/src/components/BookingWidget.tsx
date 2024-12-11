@@ -166,15 +166,15 @@ export default function BookingWidget() {
       try {
         setMapsLoading(true);
         if (!googleMapsApiKey || googleMapsApiKey === "undefined") {
-          console.error("Google Maps API key is missing or invalid:", googleMapsApiKey);
-          throw new Error('Google Maps API key is not properly configured. Please check your environment configuration.');
+          console.error("Google Maps API key is missing");
+          throw new Error('Google Maps API key is not configured');
         }
         
         setMapsLoading(false);
         setMapsError(null);
       } catch (err) {
         console.error("Google Maps API key error:", err);
-        setMapsError(err instanceof Error ? err.message : 'Failed to load Google Maps');
+        setMapsError('Error: Google Maps is not configured properly. Please try refreshing the page or contact support.');
         setMapsLoading(false);
       }
     };
