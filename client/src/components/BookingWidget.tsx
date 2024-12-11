@@ -153,13 +153,34 @@ export default function BookingWidget() {
     createBooking(bookingData);
   };
 
-  // Define libraries array at the component level
-  const libraries: google.maps.Libraries = ["places"];
+  // Explicitly type the libraries array
+  const libraries: Libraries = ["places"];
+
+  // Check if Google Maps API key is available
+  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  
+  if (!googleMapsApiKey) {
+    return (
+      <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
+        <div className="text-destructive text-sm">
+          Error: Google Maps API key is not configured. Please check your environment configuration.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <LoadScript
-      googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+      googleMapsApiKey={googleMapsApiKey}
       libraries={libraries}
+      loadingElement={
+        <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
+          <div className="flex items-center justify-center space-x-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Loading Maps...</span>
+          </div>
+        </div>
+      }
     >
       <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
         <Tabs defaultValue="destination" className="w-full">
