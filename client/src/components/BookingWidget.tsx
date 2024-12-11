@@ -162,34 +162,30 @@ export default function BookingWidget() {
   const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   
   useEffect(() => {
-    const validateApiKey = async () => {
+    const validateApiKey = () => {
       try {
         setMapsLoading(true);
         
-        // Check if the API key exists and is not undefined or empty
-        if (!googleMapsApiKey || 
-            googleMapsApiKey === "undefined" || 
-            googleMapsApiKey === "${GOOGLE_MAPS_API_KEY}" || 
-            googleMapsApiKey.trim() === "") {
-          throw new Error('Missing or invalid Google Maps API key');
+        if (!import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
+          throw new Error('Google Maps API key is missing');
         }
 
-        // Additional validation to ensure it's not just the environment variable placeholder
-        if (googleMapsApiKey.includes('${') && googleMapsApiKey.includes('}')) {
-          throw new Error('Environment variable not properly interpolated');
+        // Check if the API key is the actual value and not the variable name
+        if (import.meta.env.VITE_GOOGLE_MAPS_API_KEY.includes('$')) {
+          throw new Error('Google Maps API key is not properly configured');
         }
 
         setMapsLoading(false);
         setMapsError(null);
-      } catch (err) {
-        console.error("Google Maps API key validation failed:", err.message);
-        setMapsError('Google Maps is currently unavailable. Please try again later.');
+      } catch (error) {
+        console.error("Google Maps API key validation failed:", error);
+        setMapsError('Location services are temporarily unavailable. Please contact support if this persists.');
         setMapsLoading(false);
       }
     };
     
     validateApiKey();
-  }, [googleMapsApiKey]);
+  }, []);
 
   if (mapsLoading) {
     return (
@@ -214,7 +210,7 @@ export default function BookingWidget() {
 
   return (
     <LoadScript
-      googleMapsApiKey={googleMapsApiKey}
+      googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
       libraries={libraries}
       loadingElement={
         <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
@@ -224,6 +220,10 @@ export default function BookingWidget() {
           </div>
         </div>
       }
+      onError={(error) => {
+        console.error('Google Maps loading error:', error);
+        setMapsError('Failed to load Google Maps. Please try again later.');
+      }}
     >
       <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
         <Tabs defaultValue="destination" className="w-full">
