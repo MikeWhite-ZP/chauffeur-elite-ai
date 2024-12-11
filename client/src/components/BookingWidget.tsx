@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { type InsertBooking } from "@db/schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +25,6 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const timeSchema = z.object({
@@ -57,6 +56,8 @@ export default function BookingWidget() {
   const queryClient = useQueryClient();
   const [stops, setStops] = useState<string[]>([]);
   const [showStopInput, setShowStopInput] = useState(false);
+  const [mapsLoading, setMapsLoading] = useState(true);
+  const [mapsError, setMapsError] = useState<string | null>(null);
 
   const destinationForm = useForm<z.infer<typeof destinationSchema>>({
     resolver: zodResolver(destinationSchema),
@@ -79,7 +80,7 @@ export default function BookingWidget() {
     },
   });
 
-  const { mutate: createBooking, isPending: isLoading } = useMutation({
+  const { mutate: createBooking, isPending: isSubmitting } = useMutation({
     mutationFn: async (bookingData: Partial<InsertBooking>) => {
       const response = await fetch("/api/bookings", {
         method: "POST",
@@ -127,7 +128,7 @@ export default function BookingWidget() {
       totalFare: "100.00", // Should be calculated based on distance and other factors
       status: "pending",
       paymentStatus: "pending",
-      stops: stops.length > 0 ? stops : undefined,
+      stops: stops.length > 0 ? stops.join(',') : null,
       trackingEnabled: true
     };
 
@@ -161,25 +162,42 @@ export default function BookingWidget() {
   const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   
   useEffect(() => {
-    if (!googleMapsApiKey) {
-      console.error('Google Maps API key is missing. Check VITE_GOOGLE_MAPS_API_KEY in environment variables.');
-    } else {
-      console.log('Google Maps API key is configured');
-    }
+    const checkApiKey = async () => {
+      try {
+        setMapsLoading(true);
+        if (!googleMapsApiKey || googleMapsApiKey === "undefined") {
+          console.error("Google Maps API key is missing or invalid:", googleMapsApiKey);
+          throw new Error('Google Maps API key is not properly configured. Please check your environment configuration.');
+        }
+        
+        setMapsLoading(false);
+        setMapsError(null);
+      } catch (err) {
+        console.error("Google Maps API key error:", err);
+        setMapsError(err instanceof Error ? err.message : 'Failed to load Google Maps');
+        setMapsLoading(false);
+      }
+    };
+    
+    checkApiKey();
   }, [googleMapsApiKey]);
 
-  // Ensure the API key is properly loaded before rendering the map components
-  const [isApiKeyLoaded, setIsApiKeyLoaded] = useState(false);
+  if (mapsLoading) {
+    return (
+      <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
+        <div className="flex items-center justify-center space-x-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading Maps Configuration...</span>
+        </div>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    setIsApiKeyLoaded(!!googleMapsApiKey);
-  }, [googleMapsApiKey]);
-
-  if (!googleMapsApiKey) {
+  if (mapsError) {
     return (
       <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
         <div className="text-destructive text-sm">
-          Error: Google Maps API key is not configured. Please check your environment configuration.
+          Error: {mapsError}. Please contact support if this issue persists.
         </div>
       </div>
     );
@@ -356,8 +374,8 @@ export default function BookingWidget() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating booking..." : "Book Now"}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating booking..." : "Book Now"}
                 </Button>
               </form>
             </Form>
@@ -475,8 +493,8 @@ export default function BookingWidget() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating booking..." : "Book Now"}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating booking..." : "Book Now"}
                 </Button>
               </form>
             </Form>
