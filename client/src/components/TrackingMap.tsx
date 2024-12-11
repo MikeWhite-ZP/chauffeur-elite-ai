@@ -45,7 +45,17 @@ export default function TrackingMap({
           <p className="text-destructive">{error}</p>
         </div>
       )}
-      <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+      <LoadScript 
+        googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+        loadingElement={
+          <div className="flex items-center justify-center h-[500px]">
+            <p>Loading map...</p>
+          </div>
+        }
+        onError={(error) => {
+          console.error('Google Maps loading error:', error);
+        }}
+      >
         <GoogleMap
           mapContainerStyle={containerStyle}
           center={position}

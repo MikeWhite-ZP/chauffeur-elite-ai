@@ -162,24 +162,33 @@ export default function BookingWidget() {
   const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   
   useEffect(() => {
-    const checkApiKey = async () => {
+    const validateApiKey = async () => {
       try {
         setMapsLoading(true);
-        if (!googleMapsApiKey || googleMapsApiKey === "undefined") {
-          console.error("Google Maps API key is missing");
-          throw new Error('Google Maps API key is not configured');
-        }
         
+        // Check if the API key exists and is not undefined or empty
+        if (!googleMapsApiKey || 
+            googleMapsApiKey === "undefined" || 
+            googleMapsApiKey === "${GOOGLE_MAPS_API_KEY}" || 
+            googleMapsApiKey.trim() === "") {
+          throw new Error('Missing or invalid Google Maps API key');
+        }
+
+        // Additional validation to ensure it's not just the environment variable placeholder
+        if (googleMapsApiKey.includes('${') && googleMapsApiKey.includes('}')) {
+          throw new Error('Environment variable not properly interpolated');
+        }
+
         setMapsLoading(false);
         setMapsError(null);
       } catch (err) {
-        console.error("Google Maps API key error:", err);
-        setMapsError('Error: Google Maps is not configured properly. Please try refreshing the page or contact support.');
+        console.error("Google Maps API key validation failed:", err.message);
+        setMapsError('Google Maps is currently unavailable. Please try again later.');
         setMapsLoading(false);
       }
     };
     
-    checkApiKey();
+    validateApiKey();
   }, [googleMapsApiKey]);
 
   if (mapsLoading) {
