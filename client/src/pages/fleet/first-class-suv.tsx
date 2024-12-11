@@ -31,13 +31,13 @@ export default function FirstClassSUV() {
           <section className="relative h-[60vh] rounded-lg overflow-hidden">
             <div className="relative h-full w-full">
               <img
-                src="/2024-Cadillac-Escalade.png"
+                src="/2024-Cadillac-Escalade-FrontSide_CADESCV22401_640x480-3321341654.jpg"
                 alt="2024 Cadillac Escalade"
                 className="w-full h-full object-contain rounded-lg bg-white/5"
                 onError={(e) => {
                   const img = e.currentTarget;
                   img.onerror = null;
-                  img.src = "https://images.unsplash.com/photo-1532974297617-c0f05fe48bff";
+                  img.src = "/2024-Cadillac-Escalade-FrontSide_CADESCV22401_640x480-3321341654.jpg";
                   img.alt = "Luxury First Class SUV - Alternative Image";
                 }}
               />
