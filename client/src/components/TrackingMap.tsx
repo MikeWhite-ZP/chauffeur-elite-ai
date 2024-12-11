@@ -1,21 +1,28 @@
-import { useEffect, useState } from 'react';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { useEffect, useState, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { Icon } from 'leaflet';
 import { useLocationTracking } from '@/hooks/use-location-tracking';
+import 'leaflet/dist/leaflet.css';
 
 interface TrackingMapProps {
   bookingId: number;
   initialPosition?: { lat: number; lng: number };
 }
 
-const containerStyle = {
-  width: '100%',
-  height: '500px'
-};
-
 const defaultCenter = {
   lat: 29.7604,
   lng: -95.3698
 };
+
+const markerIcon = new Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
 export default function TrackingMap({ 
   bookingId, 
@@ -23,6 +30,7 @@ export default function TrackingMap({
 }: TrackingMapProps) {
   const { location, error, isConnected } = useLocationTracking(bookingId);
   const [position, setPosition] = useState(initialPosition);
+  const mapRef = useRef(null);
 
   useEffect(() => {
     if (location) {
@@ -33,49 +41,41 @@ export default function TrackingMap({
     }
   }, [location]);
 
+  if (!isConnected) {
+    return (
+      <div className="relative w-full h-[500px] rounded-lg overflow-hidden bg-background/80 flex items-center justify-center">
+        <p className="text-foreground">Connecting to tracking service...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="relative w-full h-[500px] rounded-lg overflow-hidden bg-background/80 flex items-center justify-center">
+        <p className="text-destructive">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-[500px] rounded-lg overflow-hidden">
-      {!isConnected && (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <p className="text-foreground">Connecting to tracking service...</p>
-        </div>
-      )}
-      {error && (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <p className="text-destructive">{error}</p>
-        </div>
-      )}
-      <LoadScript 
-        googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
-        loadingElement={
-          <div className="flex items-center justify-center h-[500px]">
-            <p>Loading map...</p>
-          </div>
-        }
-        onError={(error) => {
-          console.error('Google Maps loading error:', error);
-        }}
+      <MapContainer
+        center={[position.lat, position.lng]}
+        zoom={13}
+        style={{ height: '100%', width: '100%' }}
+        ref={mapRef}
       >
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={position}
-          zoom={13}
-          options={{
-            zoomControl: true,
-            streetViewControl: false,
-            mapTypeControl: false,
-            fullscreenControl: false,
-          }}
-        >
-          <Marker
-            position={position}
-            icon={{
-              url: '/car-marker.png',
-              scaledSize: new window.google.maps.Size(32, 32),
-            }}
-          />
-        </GoogleMap>
-      </LoadScript>
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        <Marker position={[position.lat, position.lng]} icon={markerIcon}>
+          <Popup>
+            Driver's current location<br/>
+            Last updated: {new Date().toLocaleTimeString()}
+          </Popup>
+        </Marker>
+      </MapContainer>
     </div>
   );
 }

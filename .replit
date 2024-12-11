@@ -21,3 +21,22 @@ runButton = "Project"
 name = "Project"
 mode = "parallel"
 author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Server"
+
+[[workflows.workflow]]
+name = "Server"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000

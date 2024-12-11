@@ -3,6 +3,7 @@ import { useLocationTracking } from '@/hooks/use-location-tracking';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 interface LocationTrackerProps {
   bookingId: number;
@@ -12,6 +13,7 @@ interface LocationTrackerProps {
 export default function LocationTracker({ bookingId, isActive }: LocationTrackerProps) {
   const { updateLocation, connectionStatus, error } = useLocationTracking(bookingId);
   const [isTracking, setIsTracking] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const watchIdRef = useRef<number>();
   const { toast } = useToast();
 
@@ -33,24 +35,43 @@ export default function LocationTracker({ bookingId, isActive }: LocationTracker
       return;
     }
 
+    setIsLoading(true);
     setIsTracking(true);
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude, speed, heading } = position.coords;
-        updateLocation(latitude, longitude, speed || undefined, heading || undefined);
+
+    // First get a single position to ensure everything works
+    navigator.geolocation.getCurrentPosition(
+      () => {
+        // If successful, start continuous tracking
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          (position) => {
+            const { latitude, longitude, speed, heading } = position.coords;
+            updateLocation(latitude, longitude, speed || undefined, heading || undefined);
+            setIsLoading(false);
+          },
+          (error) => {
+            toast({
+              title: "Error",
+              description: `Location tracking error: ${error.message}`,
+              variant: "destructive",
+            });
+            setIsTracking(false);
+            setIsLoading(false);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          }
+        );
       },
       (error) => {
         toast({
           title: "Error",
-          description: error.message,
+          description: `Could not get location: ${error.message}`,
           variant: "destructive",
         });
         setIsTracking(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
+        setIsLoading(false);
       }
     );
   };
@@ -61,6 +82,7 @@ export default function LocationTracker({ bookingId, isActive }: LocationTracker
       watchIdRef.current = undefined;
     }
     setIsTracking(false);
+    setIsLoading(false);
   };
 
   if (!isActive) return null;
@@ -74,8 +96,18 @@ export default function LocationTracker({ bookingId, isActive }: LocationTracker
       <Button
         onClick={isTracking ? stopTracking : startTracking}
         variant={isTracking ? "destructive" : "default"}
+        disabled={isLoading}
       >
-        {isTracking ? "Stop Tracking" : "Start Tracking"}
+        {isLoading ? (
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Initializing...
+          </span>
+        ) : isTracking ? (
+          "Stop Tracking"
+        ) : (
+          "Start Tracking"
+        )}
       </Button>
     </div>
   );

@@ -71,23 +71,43 @@ app.use((req, res, next) => {
   const server = createServer(app);
   
   // Set up WebSocket server with proper error handling
-  const wss = new WebSocketServer({ 
-    server,
-    path: "/ws",
-    clientTracking: true
-  });
-  
-  // Initialize WebSocket handling
-  setupWebSocket(wss);
-  
-  // Log WebSocket server status
-  wss.on('listening', () => {
-    log('WebSocket server is ready');
-  });
-  
-  wss.on('error', (error) => {
-    console.error('WebSocket server error:', error);
-  });
+  let wss: WebSocketServer | null = null;
+
+  const setupWss = () => {
+    if (wss) {
+      // Clean up existing connections
+      wss.clients.forEach(client => {
+        try {
+          client.close();
+        } catch (e) {
+          console.error('Error closing WebSocket client:', e);
+        }
+      });
+      wss.close();
+    }
+
+    wss = new WebSocketServer({ 
+      server,
+      path: "/ws",
+      clientTracking: true
+    });
+    
+    // Initialize WebSocket handling
+    setupWebSocket(wss);
+    
+    // Log WebSocket server status
+    wss.on('listening', () => {
+      log('WebSocket server is ready');
+    });
+    
+    wss.on('error', (error) => {
+      console.error('WebSocket server error:', error);
+    });
+
+    return wss;
+  };
+
+  setupWss();
 
   interface AppError extends Error {
     status?: number;
@@ -116,10 +136,54 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client
-  const PORT = 5000;
-  server.listen(PORT, "0.0.0.0", () => {
-    log(`serving on port ${PORT}`);
-  });
+  // Try to serve on port 5000 first, then try alternative ports
+  const tryPort = async (port: number, maxAttempts = 10): Promise<number> => {
+    if (maxAttempts <= 0) {
+      throw new Error('Maximum port attempts reached');
+    }
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        server.once('error', (err: NodeJS.ErrnoException) => {
+          if (err.code === 'EADDRINUSE') {
+            log(`Port ${port} is in use, trying ${port + 1}`);
+            server.close();
+            resolve();
+          } else {
+            reject(err);
+          }
+        });
+
+        server.once('listening', () => {
+          log(`Server is running on port ${port}`);
+          resolve();
+        });
+
+        server.listen(port, '0.0.0.0');
+      });
+
+      return port;
+    } catch (err) {
+      if (err instanceof Error && 'code' in err && err.code === 'EADDRINUSE') {
+        return tryPort(port + 1, maxAttempts - 1);
+      }
+      throw err;
+    }
+  };
+
+  // Start with port 5000 and try subsequent ports if needed
+  tryPort(5000)
+    .then(port => {
+      log(`Server successfully started on port ${port}`);
+    })
+    .catch(err => {
+      console.error('Failed to start server:', err);
+      if (wss) {
+        wss.close(() => {
+          process.exit(1);
+        });
+      } else {
+        process.exit(1);
+      }
+    });
 })();
