@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Autocomplete } from "@react-google-maps/api";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { FormControl, FormItem, FormMessage } from "@/components/ui/form";
 
@@ -20,14 +20,13 @@ export default function LocationAutocomplete({
   error
 }: LocationAutocompleteProps) {
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
-  const [libraries] = useState<["places"]>(["places"]);
 
-  const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
-    setAutocomplete(autocomplete);
+  const onLoad = (autoComplete: google.maps.places.Autocomplete) => {
+    setAutocomplete(autoComplete);
   };
 
   const onPlaceChanged = () => {
-    if (autocomplete !== null) {
+    if (autocomplete) {
       const place = autocomplete.getPlace();
       if (place.formatted_address) {
         onChange(place.formatted_address);
@@ -42,7 +41,11 @@ export default function LocationAutocomplete({
         <Autocomplete
           onLoad={onLoad}
           onPlaceChanged={onPlaceChanged}
-          options={{ componentRestrictions: { country: "us" } }}
+          options={{
+            componentRestrictions: { country: "us" },
+            fields: ["formatted_address", "geometry", "name"],
+            types: ["address"]
+          }}
         >
           <Input
             type="text"

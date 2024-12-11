@@ -48,12 +48,15 @@ const hourlySchema = z.object({
   time: timeSchema,
 });
 
+// Explicitly type the libraries array
+type Libraries = ("places")[];
+
 export default function BookingWidget() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [stops, setStops] = useState<string[]>([]);
   const [showStopInput, setShowStopInput] = useState(false);
-  
+
   const destinationForm = useForm<z.infer<typeof destinationSchema>>({
     resolver: zodResolver(destinationSchema),
     defaultValues: {
@@ -150,10 +153,13 @@ export default function BookingWidget() {
     createBooking(bookingData);
   };
 
+  // Define libraries array at the component level
+  const libraries: google.maps.Libraries = ["places"];
+
   return (
     <LoadScript
       googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
-      libraries={["places"]}
+      libraries={libraries}
     >
       <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
         <Tabs defaultValue="destination" className="w-full">
