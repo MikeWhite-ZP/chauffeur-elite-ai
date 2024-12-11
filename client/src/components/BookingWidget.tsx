@@ -158,33 +158,35 @@ export default function BookingWidget() {
   // Explicitly type the libraries array
   const libraries: Libraries = ["places"];
 
-  // Check if Google Maps API key is available
-  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  
   useEffect(() => {
-    const validateApiKey = () => {
+    const initializeMaps = async () => {
       try {
         setMapsLoading(true);
+        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
         
-        if (!import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
-          throw new Error('Google Maps API key is missing');
+        if (!apiKey || apiKey === 'undefined' || apiKey.includes('$') || apiKey.includes('{')) {
+          throw new Error('Google Maps API key is not properly configured');
         }
 
-        // Check if the API key is the actual value and not the variable name
-        if (import.meta.env.VITE_GOOGLE_MAPS_API_KEY.includes('$')) {
-          throw new Error('Google Maps API key is not properly configured');
+        // Test if API key is valid by making a simple request
+        const testUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=test&key=${apiKey}`;
+        const response = await fetch(testUrl);
+        const data = await response.json();
+        
+        if (data.error_message) {
+          throw new Error(data.error_message);
         }
 
         setMapsLoading(false);
         setMapsError(null);
       } catch (error) {
-        console.error("Google Maps API key validation failed:", error);
-        setMapsError('Location services are temporarily unavailable. Please contact support if this persists.');
+        console.error("Google Maps initialization error:", error);
+        setMapsError('Location services are temporarily unavailable. Please try again later.');
         setMapsLoading(false);
       }
     };
     
-    validateApiKey();
+    initializeMaps();
   }, []);
 
   if (mapsLoading) {
@@ -220,9 +222,14 @@ export default function BookingWidget() {
           </div>
         </div>
       }
+      onLoad={() => {
+        setMapsError(null);
+        setMapsLoading(false);
+      }}
       onError={(error) => {
         console.error('Google Maps loading error:', error);
-        setMapsError('Failed to load Google Maps. Please try again later.');
+        setMapsError('Unable to load maps. Please check your internet connection and try again.');
+        setMapsLoading(false);
       }}
     >
       <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
