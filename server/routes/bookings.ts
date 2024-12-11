@@ -8,9 +8,17 @@ export async function createBooking(req: Request, res: Response) {
   try {
     const bookingData = insertBookingSchema.parse(req.body);
     
+    // Ensure stops is properly formatted as string array
+    const stops = bookingData.stops && typeof bookingData.stops === 'string' 
+      ? [bookingData.stops]
+      : Array.isArray(bookingData.stops) 
+        ? bookingData.stops
+        : undefined;
+    
     // Set default values
     const booking = {
       ...bookingData,
+      stops,
       status: "pending",
       paymentStatus: "pending",
       trackingEnabled: false,

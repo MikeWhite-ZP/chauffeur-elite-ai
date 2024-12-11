@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2 } from "lucide-react";
 import { type InsertBooking } from "@db/schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +26,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const timeSchema = z.object({
   hour: z.string().min(1, "Hour is required"),
@@ -126,7 +127,7 @@ export default function BookingWidget() {
       totalFare: "100.00", // Should be calculated based on distance and other factors
       status: "pending",
       paymentStatus: "pending",
-      stops: stops.length > 0 ? stops.join(';') : null, // Convert array to string with semicolon separator
+      stops: stops.length > 0 ? stops : undefined,
       trackingEnabled: true
     };
 
@@ -159,6 +160,21 @@ export default function BookingWidget() {
   // Check if Google Maps API key is available
   const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   
+  useEffect(() => {
+    if (!googleMapsApiKey) {
+      console.error('Google Maps API key is missing. Check VITE_GOOGLE_MAPS_API_KEY in environment variables.');
+    } else {
+      console.log('Google Maps API key is configured');
+    }
+  }, [googleMapsApiKey]);
+
+  // Ensure the API key is properly loaded before rendering the map components
+  const [isApiKeyLoaded, setIsApiKeyLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsApiKeyLoaded(!!googleMapsApiKey);
+  }, [googleMapsApiKey]);
+
   if (!googleMapsApiKey) {
     return (
       <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
