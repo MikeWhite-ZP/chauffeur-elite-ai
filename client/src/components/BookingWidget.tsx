@@ -1,8 +1,11 @@
 import * as React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { type InsertBooking } from "@db/schema";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -43,6 +46,9 @@ const hourlySchema = z.object({
 });
 
 export default function BookingWidget() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const destinationForm = useForm<z.infer<typeof destinationSchema>>({
     resolver: zodResolver(destinationSchema),
   });
@@ -53,12 +59,69 @@ export default function BookingWidget() {
 
   const [showStopInput, setShowStopInput] = React.useState(false);
 
-  const onDestinationSubmit = (data: z.infer<typeof destinationSchema>) => {
-    console.log("Destination booking:", data);
+  const { mutate: createBooking, isPending: isLoading } = useMutation({
+    mutationFn: async (bookingData: Partial<InsertBooking>) => {
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingData),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to create booking");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Your booking has been created successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create booking",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onDestinationSubmit = async (data: z.infer<typeof destinationSchema>) => {
+    const bookingData: Partial<InsertBooking> = {
+      serviceType: "destination",
+      pickupLocation: data.from,
+      dropoffLocation: data.to,
+      pickupDate: new Date(`${data.date} ${data.time.hour}:${data.time.minute} ${data.time.period}`),
+      passengerCount: 1,
+      // Add other required fields from schema with proper string types for decimal values
+      basePrice: "0",
+      totalFare: "0",
+      status: "pending",
+      paymentStatus: "pending",
+      stops: [],
+    };
+
+    createBooking(bookingData);
   };
 
-  const onHourlySubmit = (data: z.infer<typeof hourlySchema>) => {
-    console.log("Hourly booking:", data);
+  const onHourlySubmit = async (data: z.infer<typeof hourlySchema>) => {
+    const bookingData: Partial<InsertBooking> = {
+      serviceType: "hourly",
+      pickupLocation: data.from,
+      dropoffLocation: data.from, // Same as pickup for hourly
+      pickupDate: new Date(`${data.date} ${data.time.hour}:${data.time.minute} ${data.time.period}`),
+      duration: parseInt(data.duration),
+      passengerCount: 1,
+      // Add other required fields from schema with proper string types for decimal values
+      basePrice: "0",
+      totalFare: "0",
+      status: "pending",
+      paymentStatus: "pending",
+      stops: [],
+    };
+
+    createBooking(bookingData);
   };
 
   return (
