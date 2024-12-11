@@ -1,8 +1,14 @@
-import { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useEffect, useState, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import { useLocationTracking } from '@/hooks/use-location-tracking';
+import { Loader2 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
+
+// Ensure Leaflet's default icon images are properly loaded
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 interface TrackingMapProps {
   bookingId: number;
@@ -10,19 +16,42 @@ interface TrackingMapProps {
 }
 
 const defaultCenter = {
-  lat: 29.7604,
+  lat: 29.7604, // Houston coordinates
   lng: -95.3698
 };
 
-const markerIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+// Fix Leaflet's default icon path issues
+delete (Icon.Default.prototype as any)._getIconUrl;
+Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
+
+// Component to handle map center updates with smooth animation
+function MapUpdater({ position, animate = true }: { position: { lat: number; lng: number }, animate?: boolean }) {
+  const map = useMap();
+  
+  const updatePosition = useCallback(() => {
+    if (animate) {
+      map.flyTo([position.lat, position.lng], map.getZoom(), {
+        duration: 2
+      });
+    } else {
+      map.setView([position.lat, position.lng], map.getZoom());
+    }
+  }, [map, position, animate]);
+
+  useEffect(() => {
+    updatePosition();
+  }, [updatePosition]);
+
+  return null;
+}
 
 export default function TrackingMap({ 
   bookingId, 
@@ -30,7 +59,7 @@ export default function TrackingMap({
 }: TrackingMapProps) {
   const { location, error, isConnected } = useLocationTracking(bookingId);
   const [position, setPosition] = useState(initialPosition);
-  const mapRef = useRef(null);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
     if (location) {
@@ -38,21 +67,28 @@ export default function TrackingMap({
         lat: Number(location.latitude),
         lng: Number(location.longitude)
       });
+      setLastUpdate(new Date());
     }
   }, [location]);
 
+  const MapPlaceholder = ({ message }: { message: string }) => (
+    <div className="relative w-full h-[500px] rounded-lg overflow-hidden bg-background/80 flex flex-col items-center justify-center gap-4">
+      <Loader2 className="h-8 w-8 animate-spin" />
+      <p className="text-foreground text-center px-4">{message}</p>
+    </div>
+  );
+
   if (!isConnected) {
-    return (
-      <div className="relative w-full h-[500px] rounded-lg overflow-hidden bg-background/80 flex items-center justify-center">
-        <p className="text-foreground">Connecting to tracking service...</p>
-      </div>
-    );
+    return <MapPlaceholder message="Establishing connection to tracking service..." />;
   }
 
   if (error) {
     return (
-      <div className="relative w-full h-[500px] rounded-lg overflow-hidden bg-background/80 flex items-center justify-center">
-        <p className="text-destructive">{error}</p>
+      <div className="relative w-full h-[500px] rounded-lg overflow-hidden bg-destructive/10 flex items-center justify-center">
+        <div className="text-center p-4">
+          <p className="text-destructive font-semibold mb-2">Connection Error</p>
+          <p className="text-destructive/80">{error}</p>
+        </div>
       </div>
     );
   }
@@ -63,18 +99,23 @@ export default function TrackingMap({
         center={[position.lat, position.lng]}
         zoom={13}
         style={{ height: '100%', width: '100%' }}
-        ref={mapRef}
+        scrollWheelZoom={true}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        <Marker position={[position.lat, position.lng]} icon={markerIcon}>
+        <Marker position={[position.lat, position.lng]}>
           <Popup>
-            Driver's current location<br/>
-            Last updated: {new Date().toLocaleTimeString()}
+            <div className="text-sm">
+              <p className="font-semibold mb-1">Driver's Location</p>
+              <p className="text-gray-600">
+                Last updated: {lastUpdate.toLocaleTimeString()}
+              </p>
+            </div>
           </Popup>
         </Marker>
+        <MapUpdater position={position} />
       </MapContainer>
     </div>
   );

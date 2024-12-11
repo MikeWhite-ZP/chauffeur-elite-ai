@@ -143,24 +143,43 @@ app.use((req, res, next) => {
     }
 
     try {
+      // Close any existing connections first
+      await new Promise<void>((resolve) => {
+        if (server.listening) {
+          server.close(() => resolve());
+        } else {
+          resolve();
+        }
+      });
+
       await new Promise<void>((resolve, reject) => {
-        server.once('error', (err: NodeJS.ErrnoException) => {
+        const onError = (err: NodeJS.ErrnoException) => {
+          server.off('error', onError);
+          server.off('listening', onListening);
+          
           if (err.code === 'EADDRINUSE') {
             log(`Port ${port} is in use, trying ${port + 1}`);
-            server.close();
             resolve();
           } else {
             reject(err);
           }
-        });
+        };
 
-        server.once('listening', () => {
+        const onListening = () => {
+          server.off('error', onError);
+          server.off('listening', onListening);
           log(`Server is running on port ${port}`);
           resolve();
-        });
+        };
 
+        server.once('error', onError);
+        server.once('listening', onListening);
         server.listen(port, '0.0.0.0');
       });
+
+      if (!server.listening) {
+        return tryPort(port + 1, maxAttempts - 1);
+      }
 
       return port;
     } catch (err) {
@@ -175,15 +194,47 @@ app.use((req, res, next) => {
   tryPort(5000)
     .then(port => {
       log(`Server successfully started on port ${port}`);
+      
+      // Set up error handlers for the server
+      server.on('error', (error: NodeJS.ErrnoException) => {
+        console.error('Server error:', error);
+        if (error.code === 'EADDRINUSE') {
+          log('Address in use, retrying...');
+          setTimeout(() => {
+            server.close();
+            tryPort(port + 1);
+          }, 1000);
+        }
+      });
+      
+      // Handle graceful shutdown
+      process.on('SIGTERM', () => {
+        log('SIGTERM received. Shutting down gracefully...');
+        if (wss) {
+          wss.close(() => {
+            server.close(() => {
+              process.exit(0);
+            });
+          });
+        } else {
+          server.close(() => {
+            process.exit(0);
+          });
+        }
+      });
     })
     .catch(err => {
       console.error('Failed to start server:', err);
       if (wss) {
         wss.close(() => {
-          process.exit(1);
+          server.close(() => {
+            process.exit(1);
+          });
         });
       } else {
-        process.exit(1);
+        server.close(() => {
+          process.exit(1);
+        });
       }
     });
 })();

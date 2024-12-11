@@ -200,17 +200,33 @@ export function setupWebSocket(wss: WebSocketServer) {
   wss.on("connection", (ws: WS) => {
     console.log("New WebSocket connection established");
     
+    // Clean up any existing connection for this WebSocket
+    if (clients.has(ws)) {
+      handleClose(ws);
+    }
+    
     if (ws.readyState === WS.OPEN) {
       try {
-        ws.send(JSON.stringify({ type: 'connection_established' }));
+        ws.send(JSON.stringify({ 
+          type: 'connection_established',
+          timestamp: new Date().toISOString()
+        }));
       } catch (e) {
         console.error("Failed to send connection acknowledgment:", e);
+        handleClose(ws);
+        return;
       }
     }
 
     ws.on("message", (message) => handleMessage(ws, message as Buffer));
     ws.on("error", (error) => handleError(ws, error));
     ws.on("close", () => handleClose(ws));
+    
+    // Set an initial ping timeout
+    const client = clients.get(ws);
+    if (client) {
+      client.lastPing = Date.now();
+    }
   });
 
   // Ping all clients every 30 seconds to keep connections alive
