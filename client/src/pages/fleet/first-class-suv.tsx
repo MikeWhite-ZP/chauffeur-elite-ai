@@ -33,11 +33,11 @@ export default function FirstClassSUV() {
               <img
                 src="/2024-Cadillac-Escalade-FrontSide_CADESCV22401_640x480-3321341654.jpg"
                 alt="2024 Cadillac Escalade"
-                className="w-full h-full object-contain rounded-lg bg-white/5"
+                className="w-full h-full object-cover object-center rounded-lg"
                 onError={(e) => {
                   const img = e.currentTarget;
                   img.onerror = null;
-                  img.src = "/2024-Cadillac-Escalade-FrontSide_CADESCV22401_640x480-3321341654.jpg";
+                  img.src = "https://images.unsplash.com/photo-1532974297617-c0f05fe48bff";
                   img.alt = "Luxury First Class SUV - Alternative Image";
                 }}
               />
