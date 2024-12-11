@@ -4,6 +4,8 @@ import { type InsertBooking } from "@db/schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { LoadScript } from "@react-google-maps/api";
+import LocationAutocomplete from "./LocationAutocomplete";
 import { useToast } from "@/hooks/use-toast";
 import {
   Select,
@@ -54,10 +56,23 @@ export default function BookingWidget() {
   
   const destinationForm = useForm<z.infer<typeof destinationSchema>>({
     resolver: zodResolver(destinationSchema),
+    defaultValues: {
+      from: "",
+      to: "",
+      date: "",
+      time: { hour: "", minute: "", period: "" },
+      stop: "",
+    },
   });
 
   const hourlyForm = useForm<z.infer<typeof hourlySchema>>({
     resolver: zodResolver(hourlySchema),
+    defaultValues: {
+      from: "",
+      duration: "",
+      date: "",
+      time: { hour: "", minute: "", period: "" },
+    },
   });
 
   const { mutate: createBooking, isPending: isLoading } = useMutation({
@@ -89,8 +104,8 @@ export default function BookingWidget() {
   });
 
   const handleAddStop = (stop: string) => {
-    if (stop) {
-      setStops([...stops, stop]);
+    if (stop && stop.trim()) {
+      setStops([...stops, stop.trim()]);
       setShowStopInput(false);
       destinationForm.setValue('stop', '');
     }
@@ -108,7 +123,7 @@ export default function BookingWidget() {
       totalFare: "100.00", // Should be calculated based on distance and other factors
       status: "pending",
       paymentStatus: "pending",
-      stops: stops.length > 0 ? stops : null,
+      stops: stops.length > 0 ? stops.join(';') : null, // Convert array to string with semicolon separator
       trackingEnabled: true
     };
 
@@ -136,285 +151,295 @@ export default function BookingWidget() {
   };
 
   return (
-    <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
-      <Tabs defaultValue="destination" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="destination">Destination</TabsTrigger>
-          <TabsTrigger value="hourly">Hourly</TabsTrigger>
-        </TabsList>
+    <LoadScript
+      googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}
+      libraries={["places"]}
+    >
+      <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
+        <Tabs defaultValue="destination" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="destination">Destination</TabsTrigger>
+            <TabsTrigger value="hourly">Hourly</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="destination">
-          <Form {...destinationForm}>
-            <form onSubmit={destinationForm.handleSubmit(onDestinationSubmit)} className="space-y-4">
-              <FormField
-                control={destinationForm.control}
-                name="from"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>From</Label>
-                    <FormControl>
-                      <Input placeholder="Enter pickup address" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {stops.map((stop, index) => (
-                <FormItem key={index}>
-                  <Label>Stop {index + 1}</Label>
-                  <Input value={stop} disabled />
-                </FormItem>
-              ))}
-
-              {showStopInput && (
+          <TabsContent value="destination">
+            <Form {...destinationForm}>
+              <form onSubmit={destinationForm.handleSubmit(onDestinationSubmit)} className="space-y-4">
                 <FormField
                   control={destinationForm.control}
-                  name="stop"
+                  name="from"
+                  render={({ field }) => (
+                    <LocationAutocomplete
+                      label="From"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Enter pickup address"
+                      error={destinationForm.formState.errors.from?.message}
+                    />
+                  )}
+                />
+
+                {stops.map((stop, index) => (
+                  <FormItem key={index}>
+                    <Label>Stop {index + 1}</Label>
+                    <Input value={stop} disabled />
+                  </FormItem>
+                ))}
+
+                {showStopInput && (
+                  <FormField
+                    control={destinationForm.control}
+                    name="stop"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>Add Stop</Label>
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <LocationAutocomplete
+                              label=""
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              placeholder="Enter stop address"
+                              error={destinationForm.formState.errors.stop?.message}
+                            />
+                          </FormControl>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => field.value && handleAddStop(field.value)}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {!showStopInput && (
+                  <div className="text-sm">
+                    <button
+                      type="button"
+                      className="text-primary flex items-center gap-1"
+                      onClick={() => setShowStopInput(true)}
+                    >
+                      <Plus className="h-4 w-4" /> Add Stop
+                    </button>
+                  </div>
+                )}
+
+                <FormField
+                  control={destinationForm.control}
+                  name="to"
+                  render={({ field }) => (
+                    <LocationAutocomplete
+                      label="To"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Enter dropoff address"
+                      error={destinationForm.formState.errors.to?.message}
+                    />
+                  )}
+                />
+
+                <FormField
+                  control={destinationForm.control}
+                  name="date"
                   render={({ field }) => (
                     <FormItem>
-                      <Label>Add Stop</Label>
-                      <div className="flex gap-2">
-                        <FormControl>
-                          <Input placeholder="Enter stop address" {...field} />
-                        </FormControl>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => handleAddStop(field.value)}
-                        >
-                          Add
-                        </Button>
-                      </div>
+                      <Label>Date</Label>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              )}
 
-              {!showStopInput && (
-                <div className="text-sm">
-                  <button
-                    type="button"
-                    className="text-primary flex items-center gap-1"
-                    onClick={() => setShowStopInput(true)}
-                  >
-                    <Plus className="h-4 w-4" /> Add Stop
-                  </button>
+                <div className="grid grid-cols-3 gap-2">
+                  <FormField
+                    control={destinationForm.control}
+                    name="time.hour"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Hour" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {[...Array(12)].map((_, i) => (
+                            <SelectItem key={i} value={String(i + 1)}>{i + 1}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FormField
+                    control={destinationForm.control}
+                    name="time.minute"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Min" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {[...Array(12)].map((_, i) => (
+                            <SelectItem key={i} value={String(i * 5)}>{String(i * 5).padStart(2, '0')}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FormField
+                    control={destinationForm.control}
+                    name="time.period"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="AM/PM" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="AM">AM</SelectItem>
+                          <SelectItem value="PM">PM</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
-              )}
 
-              <FormField
-                control={destinationForm.control}
-                name="to"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>To</Label>
-                    <FormControl>
-                      <Input placeholder="Enter dropoff address" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Creating booking..." : "Book Now"}
+                </Button>
+              </form>
+            </Form>
+          </TabsContent>
 
-              <FormField
-                control={destinationForm.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Date</Label>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-3 gap-2">
-                <FormField
-                  control={destinationForm.control}
-                  name="time.hour"
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Hour" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {[...Array(12)].map((_, i) => (
-                          <SelectItem key={i} value={String(i + 1)}>{i + 1}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <FormField
-                  control={destinationForm.control}
-                  name="time.minute"
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Min" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {[...Array(12)].map((_, i) => (
-                          <SelectItem key={i} value={String(i * 5)}>{String(i * 5).padStart(2, '0')}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <FormField
-                  control={destinationForm.control}
-                  name="time.period"
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="AM/PM" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="AM">AM</SelectItem>
-                        <SelectItem value="PM">PM</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating booking..." : "Book Now"}
-              </Button>
-            </form>
-          </Form>
-        </TabsContent>
-
-        <TabsContent value="hourly">
-          <Form {...hourlyForm}>
-            <form onSubmit={hourlyForm.handleSubmit(onHourlySubmit)} className="space-y-4">
-              {/* Hourly booking form fields */}
-              <FormField
-                control={hourlyForm.control}
-                name="from"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Pickup Location</Label>
-                    <FormControl>
-                      <Input placeholder="Enter pickup address" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={hourlyForm.control}
-                name="duration"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Duration</Label>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select duration" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {[2, 3, 4, 5, 6, 7, 8].map((hours) => (
-                          <SelectItem key={hours} value={String(hours)}>
-                            {hours} hours
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={hourlyForm.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Date</Label>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-3 gap-2">
+          <TabsContent value="hourly">
+            <Form {...hourlyForm}>
+              <form onSubmit={hourlyForm.handleSubmit(onHourlySubmit)} className="space-y-4">
                 <FormField
                   control={hourlyForm.control}
-                  name="time.hour"
+                  name="from"
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Hour" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {[...Array(12)].map((_, i) => (
-                          <SelectItem key={i} value={String(i + 1)}>{i + 1}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <LocationAutocomplete
+                      label="Pickup Location"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Enter pickup address"
+                      error={hourlyForm.formState.errors.from?.message}
+                    />
                   )}
                 />
-                <FormField
-                  control={hourlyForm.control}
-                  name="time.minute"
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Min" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {[...Array(12)].map((_, i) => (
-                          <SelectItem key={i} value={String(i * 5)}>{String(i * 5).padStart(2, '0')}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <FormField
-                  control={hourlyForm.control}
-                  name="time.period"
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="AM/PM" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="AM">AM</SelectItem>
-                        <SelectItem value="PM">PM</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating booking..." : "Book Now"}
-              </Button>
-            </form>
-          </Form>
-        </TabsContent>
-      </Tabs>
-    </div>
+                <FormField
+                  control={hourlyForm.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>Duration</Label>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select duration" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {[2, 3, 4, 5, 6, 7, 8].map((hours) => (
+                            <SelectItem key={hours} value={String(hours)}>
+                              {hours} hours
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={hourlyForm.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>Date</Label>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-3 gap-2">
+                  <FormField
+                    control={hourlyForm.control}
+                    name="time.hour"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Hour" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {[...Array(12)].map((_, i) => (
+                            <SelectItem key={i} value={String(i + 1)}>{i + 1}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FormField
+                    control={hourlyForm.control}
+                    name="time.minute"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Min" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {[...Array(12)].map((_, i) => (
+                            <SelectItem key={i} value={String(i * 5)}>{String(i * 5).padStart(2, '0')}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FormField
+                    control={hourlyForm.control}
+                    name="time.period"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="AM/PM" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="AM">AM</SelectItem>
+                          <SelectItem value="PM">PM</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Creating booking..." : "Book Now"}
+                </Button>
+              </form>
+            </Form>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </LoadScript>
   );
 }
