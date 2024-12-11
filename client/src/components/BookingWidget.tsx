@@ -152,7 +152,7 @@ export default function BookingWidget() {
 
   return (
     <LoadScript
-      googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}
+      googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
       libraries={["places"]}
     >
       <div className="w-full max-w-[300px] bg-white rounded-lg shadow-xl p-4">
