@@ -88,6 +88,7 @@ function Router() {
                 }>
                   <Route path="/admin/booking-management/new" component={lazy(() => import('./pages/admin/NewBooking'))} />
                   <Route path="/admin/booking-management/:id" component={lazy(() => import('./pages/admin/BookingDetails'))} />
+                  <Route path="/admin/booking-management/:id/edit" component={lazy(() => import('./pages/admin/EditBooking'))} />
                   <AdminRoutes />
                 </Suspense>
               </ErrorBoundary>
