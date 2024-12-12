@@ -65,6 +65,7 @@ export default function Navigation({ user }: NavigationProps) {
       "Travel",
     ],
     admin: [
+      "Live Tracking",
       "Driver Approvals",
       "Booking Management",
       "User Management",
