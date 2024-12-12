@@ -52,7 +52,14 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
       parking: defaultValues?.parking || "0",
       creditCardFee: defaultValues?.creditCardFee || "0",
       paymentsDeposits: defaultValues?.paymentsDeposits || "0",
-      tripId: defaultValues?.tripId || ''
+      tripId: defaultValues?.tripId || '',
+      userId: defaultValues?.userId,
+      accountId: defaultValues?.accountId || '',
+      categoryId: defaultValues?.categoryId || null,
+      jobStatus: defaultValues?.jobStatus || 'unassigned',
+      additionalRequests: defaultValues?.additionalRequests || [],
+      grandTotal: "0",
+      totalDue: "0"
     }
   });
 
@@ -161,6 +168,103 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
           </div>
         </div>
 
+        {/* Trip Details */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Trip Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="pickupDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Pick-Up Date</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
+                      onChange={(e) => {
+                        const date = new Date(e.target.value);
+                        field.onChange(date);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="pickupTime"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Pick-Up Time</FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="pickupLocation"
+            render={({ field }) => (
+              <FormItem>
+                <LocationAutocomplete
+                  label="Pick-Up Location"
+                  name={field.name}
+                  placeholder="Enter pick-up address"
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="dropoffLocation"
+            render={({ field }) => (
+              <FormItem>
+                <LocationAutocomplete
+                  label="Drop-off Location"
+                  name={field.name}
+                  placeholder="Enter drop-off address"
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <BookingFormMap
+            pickupLocation={form.watch("pickupLocation")}
+            dropoffLocation={form.watch("dropoffLocation")}
+            className="w-full h-[400px] rounded-lg overflow-hidden mb-4"
+          />
+
+          <FormField
+            control={form.control}
+            name="tripNotes"
+            render={({ field: { value, onChange, ...field } }) => (
+              <FormItem>
+                <FormLabel>Trip Notes</FormLabel>
+                <FormControl>
+                  <textarea
+                    {...field}
+                    value={value || ''}
+                    onChange={e => onChange(e.target.value)}
+                    className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Any additional notes about the trip"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         {/* Passenger Information */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Passenger Information</h3>
@@ -227,55 +331,14 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Company Information (Optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="companyName">Company Name</Label>
-              <Input
-                type="text"
-                id="companyName"
-                {...form.register("companyName")}
-                placeholder="Enter company name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="billingContact">Billing Contact</Label>
-              <Input
-                type="text"
-                id="billingContact"
-                {...form.register("billingContact")}
-                placeholder="Enter billing contact"
-              />
-            </div>
-            <div>
-              <Label htmlFor="poClientRef">PO/Client Reference #</Label>
-              <Input
-                type="text"
-                id="poClientRef"
-                {...form.register("poClientRef")}
-                placeholder="Enter reference number"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Trip Details */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Trip Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="pickupDate"
-              render={({ field }) => (
+              name="companyName"
+              render={({ field: { value, onChange, ...field } }) => (
                 <FormItem>
-                  <FormLabel>Pick-Up Date</FormLabel>
+                  <FormLabel>Company Name</FormLabel>
                   <FormControl>
-                    <Input
-                      type="date"
-                      value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
-                      onChange={(e) => {
-                        const date = new Date(e.target.value);
-                        field.onChange(date);
-                      }}
-                    />
+                    <Input {...field} value={value || ''} onChange={e => onChange(e.target.value)} placeholder="Enter company name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -284,172 +347,31 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
 
             <FormField
               control={form.control}
-              name="pickupTime"
-              render={({ field }) => (
+              name="billingContact"
+              render={({ field: { value, onChange, ...field } }) => (
                 <FormItem>
-                  <FormLabel>Pick-Up Time</FormLabel>
+                  <FormLabel>Billing Contact</FormLabel>
                   <FormControl>
-                    <Input type="time" {...field} />
+                    <Input {...field} value={value || ''} onChange={e => onChange(e.target.value)} placeholder="Enter billing contact" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </div>
 
             <FormField
               control={form.control}
-              name="pickupLocation"
-              render={({ field }) => (
-                <LocationAutocomplete
-                  label="Pick-Up Location"
-                  name={field.name}
-                  placeholder="Enter pick-up address"
-                />
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="dropoffLocation"
-              render={({ field }) => (
-                <LocationAutocomplete
-                  label="Drop-off Location"
-                  name={field.name}
-                  placeholder="Enter drop-off address"
-                />
-              )}
-            />
-
-            <BookingFormMap
-              pickupLocation={form.watch("pickupLocation")}
-              dropoffLocation={form.watch("dropoffLocation")}
-              className="w-full h-[400px] rounded-lg overflow-hidden mb-4"
-            />
-
-            <FormField
-              control={form.control}
-              name="tripNotes"
-              render={({ field }) => (
+              name="poClientRef"
+              render={({ field: { value, onChange, ...field } }) => (
                 <FormItem>
-                  <FormLabel>Trip Notes</FormLabel>
+                  <FormLabel>PO/Client Reference #</FormLabel>
                   <FormControl>
-                    <textarea
-                      {...field}
-                      className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder="Any additional notes about the trip"
-                    />
+                    <Input {...field} value={value || ''} onChange={e => onChange(e.target.value)} placeholder="Enter reference number" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </div>
-        </div>
-
-        {/* Airport Information (Conditional) */}
-        {form.watch("serviceType") === "airport" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Flight Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="airportCode">Airport Code</Label>
-                <Input
-                  type="text"
-                  id="airportCode"
-                  {...form.register("airportCode")}
-                  placeholder="e.g., SFO"
-                />
-              </div>
-              <div>
-                <Label htmlFor="airportName">Airport Name</Label>
-                <Input
-                  type="text"
-                  id="airportName"
-                  {...form.register("airportName")}
-                  placeholder="e.g., San Francisco International"
-                />
-              </div>
-              <div>
-                <Label htmlFor="airlineCode">Airline Code</Label>
-                <Input
-                  type="text"
-                  id="airlineCode"
-                  {...form.register("airlineCode")}
-                  placeholder="e.g., UA"
-                />
-              </div>
-              <div>
-                <Label htmlFor="flightNumber">Flight Number</Label>
-                <Input
-                  type="text"
-                  id="flightNumber"
-                  {...form.register("flightNumber")}
-                  placeholder="e.g., UA123"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Pricing Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Pricing Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="basePrice">Base Price ($)</Label>
-              <Input
-                type="number"
-                id="basePrice"
-                step="0.01"
-                {...form.register("basePrice", { required: true, min: 0 })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="gratuityFee">Gratuity Fee ($)</Label>
-              <Input
-                type="number"
-                id="gratuityFee"
-                step="0.01"
-                {...form.register("gratuityFee")}
-              />
-            </div>
-            <div>
-              <Label htmlFor="extraStopsFee">Extra Stops Fee ($)</Label>
-              <Input
-                type="number"
-                id="extraStopsFee"
-                step="0.01"
-                {...form.register("extraStopsFee")}
-              />
-            </div>
-            <div>
-              <Label htmlFor="tolls">Tolls ($)</Label>
-              <Input
-                type="number"
-                id="tolls"
-                step="0.01"
-                {...form.register("tolls")}
-              />
-            </div>
-            <div>
-              <Label htmlFor="parking">Parking ($)</Label>
-              <Input
-                type="number"
-                id="parking"
-                step="0.01"
-                {...form.register("parking")}
-              />
-            </div>
-            <div>
-              <Label htmlFor="discount">Discount ($)</Label>
-              <Input
-                type="number"
-                id="discount"
-                step="0.01"
-                {...form.register("discount")}
-              />
-            </div>
           </div>
         </div>
 
@@ -458,15 +380,25 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
           <div className="space-y-2">
             <h3 className="text-lg font-semibold">Admin Information</h3>
             <div className="grid grid-cols-1 gap-4">
-              <div>
-                <Label htmlFor="userId">Customer ID</Label>
-                <Input
-                  type="number"
-                  id="userId"
-                  {...form.register("userId", { required: true })}
-                  placeholder="Enter customer ID"
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="userId"
+                render={({ field: { value, onChange, ...field } }) => (
+                  <FormItem>
+                    <FormLabel>Customer ID</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={value || ''}
+                        onChange={(e) => onChange(e.target.value ? parseInt(e.target.value) : null)}
+                        placeholder="Enter customer ID"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
         )}

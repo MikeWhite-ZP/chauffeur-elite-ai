@@ -1,7 +1,8 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FormControl, FormItem, FormMessage, useFormContext } from "@/components/ui/form";
+import { FormControl, FormItem, FormMessage } from "@/components/ui/form";
+import { useFormContext } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { useLoadScript } from "@react-google-maps/api";
 
@@ -18,8 +19,8 @@ export default function LocationAutocomplete({
   name,
   placeholder,
 }: LocationAutocompleteProps) {
-  const { setValue } = useFormContext();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const { setValue, register } = useFormContext();
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [scriptError, setScriptError] = useState<string | null>(null);
@@ -28,6 +29,12 @@ export default function LocationAutocomplete({
     googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
     libraries,
   });
+
+  const handleRef = useCallback((element: HTMLInputElement | null) => {
+    if (element) {
+      inputRef.current = element;
+    }
+  }, []);
 
   useEffect(() => {
     if (!isLoaded || !inputRef.current || autocompleteRef.current) return;
@@ -76,12 +83,12 @@ export default function LocationAutocomplete({
       <FormControl>
         <div className="relative">
           <Input
-            ref={inputRef}
+            {...register(name)}
+            ref={handleRef}
             type="text"
             placeholder={!isLoaded ? "Loading places search..." : placeholder}
             className="pr-10"
             disabled={!isLoaded}
-            required
           />
           {!isLoaded && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
