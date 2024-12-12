@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import LocationAutocomplete from "./LocationAutocomplete";
-import BookingFormMap from "./BookingFormMap";
+// Simple form components only
 import {
   Form,
   FormControl,
@@ -30,7 +29,7 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
-      serviceType: defaultValues?.serviceType || '',
+      serviceType: defaultValues?.serviceType ?? 'hourly',
       pickupDate: defaultValues?.pickupDate ? new Date(defaultValues.pickupDate) : new Date(),
       pickupTime: defaultValues?.pickupTime || '',
       pickupLocation: defaultValues?.pickupLocation || '',
@@ -42,7 +41,7 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
       companyName: defaultValues?.companyName || '',
       billingContact: defaultValues?.billingContact || '',
       poClientRef: defaultValues?.poClientRef || '',
-      vehicleType: defaultValues?.vehicleType || '',
+      vehicleType: defaultValues?.vehicleType ?? 'sedan',
       tripNotes: defaultValues?.tripNotes || '',
       basePrice: defaultValues?.basePrice || "0",
       gratuityFee: defaultValues?.gratuityFee || "0",
@@ -213,11 +212,10 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
             name="pickupLocation"
             render={({ field }) => (
               <FormItem>
-                <LocationAutocomplete
-                  label="Pick-Up Location"
-                  name={field.name}
-                  placeholder="Enter pick-up address"
-                />
+                <FormLabel>Pick-Up Location</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter pick-up address" />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -228,20 +226,13 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
             name="dropoffLocation"
             render={({ field }) => (
               <FormItem>
-                <LocationAutocomplete
-                  label="Drop-off Location"
-                  name={field.name}
-                  placeholder="Enter drop-off address"
-                />
+                <FormLabel>Drop-off Location</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter drop-off address" />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
-          />
-
-          <BookingFormMap
-            pickupLocation={form.watch("pickupLocation")}
-            dropoffLocation={form.watch("dropoffLocation")}
-            className="w-full h-[400px] rounded-lg overflow-hidden mb-4"
           />
 
           <FormField
