@@ -15,36 +15,36 @@ interface BookingFormProps {
 
 export default function BookingForm({ isAdminForm = false, onSuccess, defaultValues }: BookingFormProps) {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<BookingFormData>({
-    defaultValues: defaultValues || {
-      serviceType: undefined,
-      pickupDate: new Date(),
-      pickupTime: '',
-      pickupLocation: '',
-      dropoffLocation: '',
-      passengerFirstName: '',
-      passengerLastName: '',
-      passengerPhone: '',
-      passengerEmail: '',
-      companyName: '',
-      billingContact: '',
-      poClientRef: '',
-      vehicleType: '',
-      tripNotes: '',
-      airportCode: '',
-      airportName: '',
-      airlineCode: '',
-      airlineName: '',
-      flightNumber: '',
-      additionalRequests: [],
-      basePrice: "0",
-      gratuityFee: "0",
-      extraStopsFee: "0",
-      discount: "0",
-      tolls: "0",
-      parking: "0",
-      creditCardFee: "0",
-      paymentsDeposits: "0",
-      tripId: ''
+    defaultValues: {
+      serviceType: defaultValues?.serviceType,
+      pickupDate: defaultValues?.pickupDate ? new Date(defaultValues.pickupDate) : new Date(),
+      pickupTime: defaultValues?.pickupTime || '',
+      pickupLocation: defaultValues?.pickupLocation || '',
+      dropoffLocation: defaultValues?.dropoffLocation || '',
+      passengerFirstName: defaultValues?.passengerFirstName || '',
+      passengerLastName: defaultValues?.passengerLastName || '',
+      passengerPhone: defaultValues?.passengerPhone || '',
+      passengerEmail: defaultValues?.passengerEmail || '',
+      companyName: defaultValues?.companyName || '',
+      billingContact: defaultValues?.billingContact || '',
+      poClientRef: defaultValues?.poClientRef || '',
+      vehicleType: defaultValues?.vehicleType || '',
+      tripNotes: defaultValues?.tripNotes || '',
+      airportCode: defaultValues?.airportCode || '',
+      airportName: defaultValues?.airportName || '',
+      airlineCode: defaultValues?.airlineCode || '',
+      airlineName: defaultValues?.airlineName || '',
+      flightNumber: defaultValues?.flightNumber || '',
+      additionalRequests: defaultValues?.additionalRequests || [],
+      basePrice: defaultValues?.basePrice || "0",
+      gratuityFee: defaultValues?.gratuityFee || "0",
+      extraStopsFee: defaultValues?.extraStopsFee || "0",
+      discount: defaultValues?.discount || "0",
+      tolls: defaultValues?.tolls || "0",
+      parking: defaultValues?.parking || "0",
+      creditCardFee: defaultValues?.creditCardFee || "0",
+      paymentsDeposits: defaultValues?.paymentsDeposits || "0",
+      tripId: defaultValues?.tripId || ''
     }
   });
   const { toast } = useToast();
@@ -284,9 +284,15 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
             <Input
               type="date"
               id="pickupDate"
-              {...register("pickupDate", { required: true })}
+              {...register("pickupDate", { 
+                required: true,
+                setValueAs: (value) => new Date(value)
+              })}
               min={new Date().toISOString().split('T')[0]}
-              defaultValue={defaultValues?.pickupDate ? new Date(defaultValues.pickupDate).toISOString().split('T')[0] : undefined}
+              value={watch('pickupDate') ? new Date(watch('pickupDate')).toISOString().split('T')[0] : ''}
+              onChange={(e) => {
+                setValue('pickupDate', new Date(e.target.value));
+              }}
             />
             {errors.pickupDate && (
               <p className="text-sm text-red-500">Pick-up date is required</p>
