@@ -77,16 +77,26 @@ export default function BookingForm({ isAdminForm = false, onSuccess }: BookingF
 
       <div className="space-y-2">
         <Label htmlFor="serviceType">Service Type</Label>
-        <Select {...register("serviceType", { required: true })}>
+        <Select
+          defaultValue={undefined}
+          onValueChange={(value) => {
+            register("serviceType").onChange({ target: { value } });
+          }}
+        >
           <SelectTrigger>
-            <SelectValue placeholder="Select service type" />
+            <SelectValue placeholder="Select vehicle type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="business">Business Class</SelectItem>
-            <SelectItem value="executive">Executive Class</SelectItem>
-            <SelectItem value="luxury">Luxury Class</SelectItem>
+            <SelectItem value="business-sedan">Business Sedan</SelectItem>
+            <SelectItem value="business-suv">Business SUV</SelectItem>
+            <SelectItem value="business-van">Business Van</SelectItem>
+            <SelectItem value="first-class-sedan">First Class Sedan</SelectItem>
+            <SelectItem value="first-class-suv">First Class SUV</SelectItem>
           </SelectContent>
         </Select>
+        {errors.serviceType && (
+          <p className="text-sm text-red-500">Vehicle type is required</p>
+        )}
         {errors.serviceType && (
           <p className="text-sm text-red-500">Service type is required</p>
         )}
