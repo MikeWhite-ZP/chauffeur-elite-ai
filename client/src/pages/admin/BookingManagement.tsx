@@ -34,12 +34,18 @@ export default function BookingManagement() {
   const { data: bookings, isLoading, refetch } = useQuery<BookingWithDetails[]>({
     queryKey: ["all-bookings"],
     queryFn: async () => {
+      console.log('Fetching bookings...');
       const response = await fetch("/api/admin/bookings");
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to fetch bookings:', errorText);
         throw new Error("Failed to fetch bookings");
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Fetched bookings:', data);
+      return data;
     },
+    refetchInterval: 5000, // Refresh every 5 seconds to ensure we see new bookings
   });
 
   const handleStatusChange = async (bookingId: number, newStatus: string) => {

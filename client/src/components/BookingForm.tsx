@@ -29,6 +29,8 @@ export default function BookingForm({ isAdminForm = false, onSuccess }: BookingF
   const onSubmit = async (data: BookingFormData) => {
     try {
       const endpoint = isAdminForm ? '/api/admin/bookings' : '/api/passenger/bookings';
+      console.log('Submitting booking data:', data);
+      
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -38,8 +40,13 @@ export default function BookingForm({ isAdminForm = false, onSuccess }: BookingF
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Booking submission failed:', errorText);
         throw new Error('Failed to submit booking');
       }
+
+      const result = await response.json();
+      console.log('Booking submission successful:', result);
 
       toast({
         title: isAdminForm ? "Booking Created" : "Booking Request Received",
@@ -50,6 +57,7 @@ export default function BookingForm({ isAdminForm = false, onSuccess }: BookingF
         onSuccess();
       }
     } catch (error) {
+      console.error('Booking submission error:', error);
       toast({
         title: "Error",
         description: `Failed to ${isAdminForm ? 'create' : 'submit'} booking request. Please try again.`,
