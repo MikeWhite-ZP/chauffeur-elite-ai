@@ -1,4 +1,4 @@
-import { StrictMode, lazy } from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import "./index.css";
@@ -9,18 +9,24 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 30, // 30 minutes
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-      retry: false,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
+      retry: 3,
       refetchInterval: (query) => {
-        // Enable real-time updates for tracking-related queries
-        return query.queryKey[0] === 'tracking' ? 1000 : false;
-      }
+        // Enable real-time updates for tracking and admin-related queries
+        const realtimeQueries = ['tracking', 'active-bookings', 'all-bookings'];
+        if (realtimeQueries.includes(query.queryKey[0] as string)) {
+          return 5000; // 5 seconds for real-time data
+        }
+        return false;
+      },
+      refetchOnWindowFocus: 'always'
     },
   },
 });
 import { Toaster } from "@/components/ui/toaster";
+import { AdminRoutes } from "./components/AdminRoutes";
 import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import BookingPage from "./pages/BookingPage";
@@ -74,16 +80,7 @@ function Router() {
           <>
             <Route path="/book" component={BookingPage} />
             <Route path="/dashboard" component={DashboardPage} />
-            {user.role === 'admin' && (
-              <>
-                <Route path="/admin/live-tracking" component={lazy(() => import('./pages/admin/LiveTracking'))} />
-                <Route path="/admin/driver-approvals" component={lazy(() => import('./pages/admin/DriverApprovals'))} />
-                <Route path="/admin/booking-management" component={lazy(() => import('./pages/admin/BookingManagement'))} />
-                <Route path="/admin/user-management" component={lazy(() => import('./pages/admin/UserManagement'))} />
-                <Route path="/admin/fleet-management" component={lazy(() => import('./pages/admin/FleetManagement'))} />
-                <Route path="/admin/reports-and-analytics" component={lazy(() => import('./pages/admin/ReportsAndAnalytics'))} />
-              </>
-            )}
+            {user.role === 'admin' && <AdminRoutes />}
             {user.role === 'driver' && (
               <>
                 <Route path="/driver/my-assignments" component={lazy(() => import('./pages/driver/MyAssignments'))} />
