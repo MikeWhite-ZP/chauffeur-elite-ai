@@ -25,7 +25,7 @@ export default function LocationAutocomplete({
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
     libraries,
   });
 
@@ -57,6 +57,21 @@ export default function LocationAutocomplete({
 
   if (loadError) {
     console.error("Error loading Google Maps:", loadError);
+    return (
+      <FormItem>
+        <Label>{label}</Label>
+        <FormControl>
+          <Input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="Unable to load location search"
+            className="border-destructive"
+          />
+        </FormControl>
+        <FormMessage>Location search is currently unavailable</FormMessage>
+      </FormItem>
+    );
   }
 
   return (
