@@ -9,18 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useState } from "react";
-import BookingForm from "@/components/BookingForm";
+import { Plus, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 import type { Booking } from "@db/schema";
 
@@ -30,7 +21,19 @@ interface BookingWithDetails extends Booking {
   passengerName?: string;
 }
 
+const JOB_STATUSES = [
+  "unassigned",
+  "assigned",
+  "dispatched",
+  "on the way",
+  "arrived",
+  "passenger on board",
+  "passenger dropped off",
+  "done"
+] as const;
+
 export default function BookingManagement() {
+  const [, setLocation] = useLocation();
   const { data: bookings, isLoading, refetch } = useQuery<BookingWithDetails[]>({
     queryKey: ["all-bookings"],
     queryFn: async () => {
@@ -50,31 +53,38 @@ export default function BookingManagement() {
 
   const handleStatusChange = async (bookingId: number, newStatus: string) => {
     try {
+      console.log('Updating booking status:', { bookingId, newStatus });
       const response = await fetch(`/api/admin/bookings/${bookingId}/status`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ jobStatus: newStatus }),
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to update status:', errorText);
         throw new Error("Failed to update booking status");
       }
 
+      await refetch();
       toast({
         title: "Success",
         description: "Booking status updated successfully",
       });
-
-      refetch();
     } catch (error) {
+      console.error('Error updating status:', error);
       toast({
         title: "Error",
-        description: "Failed to update booking status",
+        description: "Failed to update booking status. Please try again.",
         variant: "destructive",
       });
     }
+  };
+
+  const handleViewDetails = (bookingId: number) => {
+    setLocation(`/admin/booking-management/${bookingId}`);
   };
 
   if (isLoading) {
@@ -112,7 +122,7 @@ export default function BookingManagement() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Booking Management</CardTitle>
-          <Button size="icon" className="ml-auto" onClick={() => window.location.href = "/admin/booking-management/new"}>
+          <Button size="icon" className="ml-auto" onClick={() => setLocation("/admin/booking-management/new")}>
             <Plus className="h-4 w-4" />
             <span className="sr-only">Add new booking</span>
           </Button>
@@ -126,7 +136,7 @@ export default function BookingManagement() {
               >
                 <div className="space-y-2">
                   <h3 className="font-medium">
-                    Booking #{booking.id}
+                    Trip #{booking.tripId}
                   </h3>
                   <p className="text-sm">
                     From: {booking.pickupLocation}
@@ -135,37 +145,40 @@ export default function BookingManagement() {
                     To: {booking.dropoffLocation}
                   </p>
                   <p className="text-sm">
-                    Date: {new Date(booking.pickupDate).toLocaleString()}
+                    Date: {new Date(booking.pickupDate).toLocaleDateString()} {booking.pickupTime}
                   </p>
                   <p className="text-sm">
-                    Passengers: {booking.passengerCount}
+                    Passenger: {booking.passengerFirstName} {booking.passengerLastName}
                   </p>
                   <p className="text-sm">
-                    Fare: ${Number(booking.totalFare).toFixed(2)}
+                    Driver: {booking.driverName || 'Not assigned'}
+                  </p>
+                  <p className="text-sm">
+                    Total: ${Number(booking.grandTotal).toFixed(2)}
                   </p>
                 </div>
                 <div className="space-y-2">
                   <Select
-                    defaultValue={booking.status || undefined}
+                    value={booking.jobStatus || undefined}
                     onValueChange={(value) => handleStatusChange(booking.id, value)}
                   >
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      {JOB_STATUSES.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      // TODO: Implement view details
-                    }}
+                    className="w-[180px]"
+                    onClick={() => handleViewDetails(booking.id)}
                   >
+                    <ExternalLink className="mr-2 h-4 w-4" />
                     View Details
                   </Button>
                 </div>
