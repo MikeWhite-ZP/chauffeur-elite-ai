@@ -290,7 +290,7 @@ function setupBookingRoutes(app: Express) {
     try {
       await db
         .update(bookings)
-        .set({ jobStatus: 'cancelled' })
+        .set({ jobStatus: 'done' })
         .where(eq(bookings.id, bookingId));
 
       res.json({ success: true });

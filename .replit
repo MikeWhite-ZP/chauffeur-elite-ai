@@ -61,4 +61,5 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd USALuxuryLimo-JavaProject && JAVA_HOME=/nix/store/$(ls -t /nix/store | grep -m1 openjdk) SPRING_OUTPUT_ANSI_ENABLED=ALWAYS ./mvnw spring-boot:run -X"
+args = "cd USALuxuryLimo-JavaProject && JAVA_HOME=/nix/store/$(ls -t /nix/store | grep -m1 openjdk) SPRING_OUTPUT_ANSI_ENABLED=ALWAYS ./mvnw spring-boot:run"
+waitForPort = 8080

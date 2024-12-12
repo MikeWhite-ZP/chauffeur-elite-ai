@@ -1,12 +1,23 @@
 import { z } from "zod";
 
+const jobStatusEnum = [
+  'unassigned',
+  'assigned',
+  'dispatched',
+  'on_the_way',
+  'arrived',
+  'passenger_on_board',
+  'passenger_dropped_off',
+  'done'
+] as const;
+
 export const bookingFormSchema = z.object({
   id: z.number().optional(),
   createdAt: z.date().nullable().optional(),
   updatedAt: z.date().nullable().optional(),
   basePrice: z.string(),
   categoryId: z.number().nullable().optional(),
-  userId: z.string().optional(),
+  userId: z.number().optional(),
   tripId: z.string(),
   accountId: z.string().nullable().optional(),
   billingContact: z.string().nullable().optional(),
@@ -26,22 +37,22 @@ export const bookingFormSchema = z.object({
   airlineName: z.string().nullable().optional(),
   flightNumber: z.string().nullable().optional(),
   tripNotes: z.string().nullable().optional(),
-  jobStatus: z.string().nullable().optional(),
-  additionalRequests: z.array(z.string()).nullable().optional(),
+  jobStatus: z.enum(jobStatusEnum).default('unassigned'),
+  additionalRequests: z.array(z.string()).default([]),
   serviceType: z.string(),
   vehicleType: z.string(),
   chauffeurId: z.number().nullable().optional(),
   vehicleId: z.number().nullable().optional(),
-  gratuityFee: z.string().optional(),
-  extraStopsFee: z.string().optional(),
-  discount: z.string().optional(),
-  tolls: z.string().optional(),
-  parking: z.string().optional(),
-  creditCardFee: z.string().optional(),
-  grandTotal: z.string().optional(),
-  paymentsDeposits: z.string().optional(),
-  totalDue: z.string().optional(),
-  trackingEnabled: z.boolean().optional(),
+  gratuityFee: z.string().default('0'),
+  extraStopsFee: z.string().default('0'),
+  discount: z.string().default('0'),
+  tolls: z.string().default('0'),
+  parking: z.string().default('0'),
+  creditCardFee: z.string().default('0'),
+  grandTotal: z.string(),
+  paymentsDeposits: z.string().default('0'),
+  totalDue: z.string(),
+  trackingEnabled: z.boolean().default(false),
   lastKnownLatitude: z.number().nullable().optional(),
   lastKnownLongitude: z.number().nullable().optional(),
   lastLocationUpdate: z.date().nullable().optional(),
@@ -50,3 +61,5 @@ export const bookingFormSchema = z.object({
 });
 
 export type BookingFormData = z.infer<typeof bookingFormSchema>;
+
+export const jobStatusOptions = jobStatusEnum;
