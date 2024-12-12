@@ -226,6 +226,100 @@ function setupBookingRoutes(app: Express) {
     }
   });
 
+  // Get single booking details
+  app.get("/api/admin/bookings/:id", async (req, res) => {
+    if (!req.isAuthenticated() || req.user?.role !== 'admin') {
+      return res.status(403).send("Unauthorized");
+    }
+
+    const bookingId = parseInt(req.params.id);
+
+    try {
+      const [booking] = await db
+        .select()
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+        .limit(1);
+
+      if (!booking) {
+        return res.status(404).send("Booking not found");
+      }
+
+      // Get driver details if assigned
+      let driverName = undefined;
+      if (booking.chauffeurId) {
+        const chauffeur = await db
+          .select({
+            userId: chauffeurs.userId
+          })
+          .from(chauffeurs)
+          .where(eq(chauffeurs.id, booking.chauffeurId))
+          .limit(1);
+
+        if (chauffeur[0]?.userId) {
+          const driver = await db
+            .select({
+              fullName: users.fullName
+            })
+            .from(users)
+            .where(eq(users.id, chauffeur[0].userId))
+            .limit(1);
+
+          driverName = driver[0]?.fullName;
+        }
+      }
+
+      res.json({
+        ...booking,
+        driverName
+      });
+    } catch (error: any) {
+      console.error("Error fetching booking details:", error);
+      res.status(500).send(`Error fetching booking details: ${error.message}`);
+    }
+  });
+
+  // Cancel booking
+  app.post("/api/admin/bookings/:id/cancel", async (req, res) => {
+    if (!req.isAuthenticated() || req.user?.role !== 'admin') {
+      return res.status(403).send("Unauthorized");
+    }
+
+    const bookingId = parseInt(req.params.id);
+
+    try {
+      await db
+        .update(bookings)
+        .set({ jobStatus: 'cancelled' })
+        .where(eq(bookings.id, bookingId));
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error cancelling booking:", error);
+      res.status(500).send(`Error cancelling booking: ${error.message}`);
+    }
+  });
+
+  // Delete booking
+  app.delete("/api/admin/bookings/:id", async (req, res) => {
+    if (!req.isAuthenticated() || req.user?.role !== 'admin') {
+      return res.status(403).send("Unauthorized");
+    }
+
+    const bookingId = parseInt(req.params.id);
+
+    try {
+      await db
+        .delete(bookings)
+        .where(eq(bookings.id, bookingId));
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting booking:", error);
+      res.status(500).send(`Error deleting booking: ${error.message}`);
+    }
+  });
+
   // Update booking status
   app.post("/api/admin/bookings/:id/status", async (req, res) => {
     if (!req.isAuthenticated() || req.user?.role !== 'admin') {
