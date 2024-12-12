@@ -5,50 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-type BookingFormData = {
-  // Basic Info
-  serviceType: 'hourly' | 'point-to-point' | 'airport' | 'event' | 'corporate';
-  userId?: number | string;
-  
-  // Passenger Information
-  passengerFirstName: string;
-  passengerLastName: string;
-  passengerPhone: string;
-  passengerEmail: string;
-  
-  // Company Information
-  companyName?: string;
-  billingContact?: string;
-  poClientRef?: string;
-  
-  // Trip Details
-  pickupDate: string;
-  pickupTime: string;
-  pickupLocation: string;
-  dropoffLocation: string;
-  vehicleType: string;
-  tripNotes?: string;
-  
-  // Airport Information (optional)
-  airportCode?: string;
-  airportName?: string;
-  airlineCode?: string;
-  airlineName?: string;
-  flightNumber?: string;
-  
-  // Additional Services
-  additionalRequests?: string[];
-  
-  // Pricing
-  basePrice: number;
-  gratuityFee?: number;
-  extraStopsFee?: number;
-  discount?: number;
-  tolls?: number;
-  parking?: number;
-  creditCardFee?: number;
-  paymentsDeposits?: number;
-};
+import { BookingFormData } from "@/types/booking";
 
 interface BookingFormProps {
   isAdminForm?: boolean;
@@ -60,7 +17,7 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<BookingFormData>({
     defaultValues: defaultValues || {
       serviceType: undefined,
-      pickupDate: '',
+      pickupDate: new Date(),
       pickupTime: '',
       pickupLocation: '',
       dropoffLocation: '',
@@ -86,7 +43,8 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
       tolls: "0",
       parking: "0",
       creditCardFee: "0",
-      paymentsDeposits: "0"
+      paymentsDeposits: "0",
+      tripId: ''
     }
   });
   const { toast } = useToast();
@@ -99,9 +57,15 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
       const formattedData = {
         ...data,
         userId: isAdminForm ? parseInt(data.userId as unknown as string) : undefined,
-        passengerCount: parseInt(data.passengerCount as unknown as string),
-        totalFare: parseFloat(data.totalFare as unknown as string),
-        serviceType: data.serviceType, // Ensure this is included
+        pickupDate: new Date(data.pickupDate),
+        basePrice: data.basePrice.toString(),
+        gratuityFee: data.gratuityFee?.toString() || "0",
+        extraStopsFee: data.extraStopsFee?.toString() || "0",
+        discount: data.discount?.toString() || "0",
+        tolls: data.tolls?.toString() || "0",
+        parking: data.parking?.toString() || "0",
+        creditCardFee: data.creditCardFee?.toString() || "0",
+        paymentsDeposits: data.paymentsDeposits?.toString() || "0"
       };
       
       console.log('Submitting booking data:', formattedData);
