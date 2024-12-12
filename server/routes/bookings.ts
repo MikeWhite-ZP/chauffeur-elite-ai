@@ -6,29 +6,22 @@ import { insertBookingSchema } from "@db/schema";
 
 export async function createBooking(req: Request, res: Response) {
   try {
+    console.log('Received booking data:', req.body);
     const bookingData = insertBookingSchema.parse(req.body);
-    
-    // Convert stops string to array if it exists
-    const stops = bookingData.stops 
-      ? typeof bookingData.stops === 'string'
-        ? bookingData.stops.split(',')
-        : Array.isArray(bookingData.stops)
-          ? bookingData.stops
-          : null
-      : null;
     
     // Set default values
     const booking = {
       ...bookingData,
-      stops: stops ? stops : null,
-      status: "pending",
-      paymentStatus: "pending",
-      trackingEnabled: false,
+      jobStatus: bookingData.jobStatus || "unassigned",
+      paymentStatus: bookingData.paymentStatus || "pending",
+      trackingEnabled: bookingData.trackingEnabled ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
+    console.log('Processed booking data:', booking);
     const [newBooking] = await db.insert(bookings).values(booking).returning();
+    console.log('Created new booking:', newBooking);
     
     res.json(newBooking);
   } catch (error) {

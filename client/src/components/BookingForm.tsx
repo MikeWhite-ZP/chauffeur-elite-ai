@@ -67,7 +67,19 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
         tolls: data.tolls?.toString() || "0",
         parking: data.parking?.toString() || "0",
         creditCardFee: data.creditCardFee?.toString() || "0",
-        paymentsDeposits: data.paymentsDeposits?.toString() || "0"
+        paymentsDeposits: data.paymentsDeposits?.toString() || "0",
+        status: "pending",
+        jobStatus: "unassigned",
+        paymentStatus: "pending",
+        trackingEnabled: false,
+        totalFare: (
+          parseFloat(data.basePrice) +
+          parseFloat(data.gratuityFee || "0") +
+          parseFloat(data.extraStopsFee || "0") +
+          parseFloat(data.tolls || "0") +
+          parseFloat(data.parking || "0") -
+          parseFloat(data.discount || "0")
+        ).toString()
       };
       
       console.log('Submitting booking data:', formattedData);
