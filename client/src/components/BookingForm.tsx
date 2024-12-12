@@ -293,7 +293,7 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
                 }
               })}
               min={new Date().toISOString().split('T')[0]}
-              defaultValue={defaultValues?.pickupDate ? new Date(defaultValues.pickupDate).toISOString().split('T')[0] : undefined}
+              value={defaultValues?.pickupDate ? new Date(defaultValues.pickupDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
               onChange={(e) => {
                 const date = new Date(e.target.value);
                 date.setHours(12, 0, 0, 0);

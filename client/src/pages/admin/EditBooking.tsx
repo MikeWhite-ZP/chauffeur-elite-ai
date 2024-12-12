@@ -37,7 +37,7 @@ export default function EditBooking() {
       }
       console.log('Converted pickup date:', pickupDate, pickupDate.toISOString());
       
-      const formattedData = {
+      const formattedData: BookingWithDetails = {
         ...data,
         pickupDate,
         serviceType: data.serviceType || undefined,
@@ -55,7 +55,11 @@ export default function EditBooking() {
         createdAt: data.createdAt ? new Date(data.createdAt) : null,
         updatedAt: data.updatedAt ? new Date(data.updatedAt) : null,
       };
+      
+      console.log('Formatted data:', formattedData);
+      return formattedData;
     },
+    enabled: !!bookingId,
   });
 
   const handleSuccess = () => {
