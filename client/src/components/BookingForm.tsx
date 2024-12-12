@@ -53,11 +53,12 @@ type BookingFormData = {
 interface BookingFormProps {
   isAdminForm?: boolean;
   onSuccess?: () => void;
+  defaultValues?: BookingFormData;
 }
 
-export default function BookingForm({ isAdminForm = false, onSuccess }: BookingFormProps) {
+export default function BookingForm({ isAdminForm = false, onSuccess, defaultValues }: BookingFormProps) {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<BookingFormData>({
-    defaultValues: {
+    defaultValues: defaultValues || {
       serviceType: undefined,
       pickupDate: '',
       pickupTime: '',
@@ -78,14 +79,14 @@ export default function BookingForm({ isAdminForm = false, onSuccess }: BookingF
       airlineName: '',
       flightNumber: '',
       additionalRequests: [],
-      basePrice: 0,
-      gratuityFee: 0,
-      extraStopsFee: 0,
-      discount: 0,
-      tolls: 0,
-      parking: 0,
-      creditCardFee: 0,
-      paymentsDeposits: 0
+      basePrice: "0",
+      gratuityFee: "0",
+      extraStopsFee: "0",
+      discount: "0",
+      tolls: "0",
+      parking: "0",
+      creditCardFee: "0",
+      paymentsDeposits: "0"
     }
   });
   const { toast } = useToast();
