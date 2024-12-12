@@ -1,11 +1,16 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormControl, FormItem, FormMessage } from "@/components/ui/form";
-import { useLoadScript } from "@react-google-maps/api";
 import { Loader2 } from "lucide-react";
 
-const libraries: ("places")[] = ["places"];
+// Declare google maps types
+declare global {
+  interface Window {
+    google: typeof google;
+    initAutocomplete: () => void;
+  }
+}
 
 interface LocationAutocompleteProps {
   label: string;
@@ -24,93 +29,65 @@ export default function LocationAutocomplete({
 }: LocationAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [initError, setInitError] = useState<string | null>(null);
-
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const debug = import.meta.env.VITE_DEBUG === 'true';
-
-  if (debug) {
-    console.log('Google Maps API Key available:', !!apiKey);
-    console.log('Current value:', value);
-  }
-
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: apiKey || "",
-    libraries,
-  });
-
-  if (debug) {
-    console.log('Google Maps Script Status:', { 
-      isLoaded, 
-      hasLoadError: !!loadError, 
-      isInitialized,
-      hasInitError: !!initError
-    });
-  }
-
-  const handlePlaceChange = useCallback(() => {
-    if (!autocompleteRef.current) return;
-
-    try {
-      const place = autocompleteRef.current.getPlace();
-      if (debug) {
-        console.log('Place selected:', place);
-      }
-
-      if (place?.formatted_address) {
-        onChange(place.formatted_address);
-      }
-    } catch (error) {
-      console.error('Error handling place change:', error);
-      setInitError('Failed to process selected address');
-    }
-  }, [onChange, debug]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [scriptError, setScriptError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoaded || !inputRef.current || isInitialized) return;
+    // Load Google Maps JavaScript API
+    const googleMapsApiKey = 'AIzaSyCIsR__dDC5C8P1ApIWtu_Jlns-9AggWO8';
+    
+    if (!window.google) {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = () => {
+        setIsLoading(false);
+        initializeAutocomplete();
+      };
+      
+      script.onerror = () => {
+        setScriptError('Failed to load Google Maps API');
+        setIsLoading(false);
+      };
+      
+      document.head.appendChild(script);
+      
+      return () => {
+        document.head.removeChild(script);
+      };
+    } else {
+      setIsLoading(false);
+      initializeAutocomplete();
+    }
+  }, []);
+
+  const initializeAutocomplete = () => {
+    if (!inputRef.current || autocompleteRef.current) return;
 
     try {
-      if (!window.google?.maps?.places) {
-        throw new Error('Google Maps Places API not available');
-      }
-
-      if (debug) {
-        console.log('Initializing Google Places Autocomplete');
-      }
-
-      autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-        componentRestrictions: { country: "us" },
-        fields: ["formatted_address", "geometry", "name"],
-        types: ["address", "establishment"]
+      const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+        types: ['address'],
+        componentRestrictions: { country: 'us' },
+        fields: ['formatted_address', 'geometry']
       });
 
-      const listener = autocompleteRef.current.addListener("place_changed", handlePlaceChange);
-      setIsInitialized(true);
-      setInitError(null);
-
-      if (debug) {
-        console.log('Google Places Autocomplete initialized successfully');
-      }
-
-      return () => {
-        if (google && listener) {
-          google.maps.event.removeListener(listener);
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place.formatted_address) {
+          onChange(place.formatted_address);
         }
-        if (autocompleteRef.current) {
-          google.maps.event.clearInstanceListeners(autocompleteRef.current);
-        }
-      };
+      });
+
+      autocompleteRef.current = autocomplete;
     } catch (error) {
-      console.error('Error initializing Google Places Autocomplete:', error);
-      setInitError(error instanceof Error ? error.message : 'Failed to initialize location search');
-      setIsInitialized(false);
+      console.error('Error initializing autocomplete:', error);
+      setScriptError('Failed to initialize location search');
     }
-  }, [isLoaded, handlePlaceChange, isInitialized, debug]);
+  };
 
-  const errorMessage = loadError?.message || initError;
-
-  if (errorMessage) {
+  if (scriptError) {
     return (
       <FormItem>
         <Label>{label}</Label>
@@ -123,7 +100,7 @@ export default function LocationAutocomplete({
             className="border-destructive"
           />
         </FormControl>
-        <FormMessage>Location search is currently unavailable: {errorMessage}</FormMessage>
+        <FormMessage>{scriptError}</FormMessage>
       </FormItem>
     );
   }
@@ -138,12 +115,12 @@ export default function LocationAutocomplete({
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={isLoaded ? placeholder : "Loading places search..."}
+            placeholder={isLoading ? "Loading places search..." : placeholder}
             className={error ? "border-destructive pr-10" : "pr-10"}
-            disabled={!isLoaded}
+            disabled={isLoading}
             required
           />
-          {!isLoaded && (
+          {isLoading && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               <Loader2 className="h-4 w-4 animate-spin" />
             </div>

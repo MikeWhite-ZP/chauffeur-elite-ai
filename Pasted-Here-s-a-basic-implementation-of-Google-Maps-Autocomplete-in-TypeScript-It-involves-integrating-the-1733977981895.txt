@@ -1,0 +1,82 @@
+Here's a basic implementation of Google Maps Autocomplete in TypeScript. It involves integrating the Google Maps JavaScript API to provide autocomplete functionality for location inputs.
+Steps to Implement:
+
+    Obtain a Google Maps API key from the Google Cloud Console.
+    Add the API key to your script source.
+    Use the Autocomplete service provided by the Google Maps JavaScript API.
+
+Code Example
+1. HTML File
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Maps Autocomplete</title>
+</head>
+<body>
+  <input id="autocomplete" type="text" placeholder="Enter a location" />
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+  <script src="./autocomplete.js" type="module"></script>
+</body>
+</html>
+
+2. autocomplete.ts
+
+// Importing types from the Google Maps API
+declare var google: any;
+
+class GoogleMapsAutocomplete {
+  private autocompleteInput: HTMLInputElement;
+  private autocomplete: google.maps.places.Autocomplete;
+
+  constructor(inputId: string) {
+    // Reference to the input element
+    this.autocompleteInput = document.getElementById(inputId) as HTMLInputElement;
+
+    if (!this.autocompleteInput) {
+      throw new Error(`Element with ID '${inputId}' not found`);
+    }
+
+    // Initialize Autocomplete
+    this.autocomplete = new google.maps.places.Autocomplete(this.autocompleteInput, {
+      types: ['geocode'], // Limit results to geographical locations
+      componentRestrictions: { country: 'us' }, // Restrict to US locations
+    });
+
+    // Add event listener for place selection
+    this.autocomplete.addListener('place_changed', this.onPlaceChanged.bind(this));
+  }
+
+  private onPlaceChanged(): void {
+    const place = this.autocomplete.getPlace();
+    if (place && place.geometry) {
+      console.log('Selected place:', place);
+      console.log('Coordinates:', place.geometry.location.lat(), place.geometry.location.lng());
+    } else {
+      console.log('No details available for the selected location');
+    }
+  }
+}
+
+// Initialize the autocomplete on page load
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    new GoogleMapsAutocomplete('autocomplete');
+  } catch (error) {
+    console.error(error.message);
+  }
+});
+
+Key Notes
+
+    API Key: Replace YOUR_API_KEY with your actual Google Maps API key.
+    Restrictions: Customize types and componentRestrictions in the Autocomplete options to fit your needs.
+    Typing Support: The declare var google is used to access Google Maps types if they are not already included in your project.
+
+How to Run
+
+    Save the files in your project.
+    Serve the HTML file using a local server (e.g., live-server, http-server) to ensure the Google Maps API loads correctly.
+    Open the webpage, start typing in the input box, and select a location.
