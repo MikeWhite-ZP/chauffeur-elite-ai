@@ -215,7 +215,7 @@ function setupBookingRoutes(app: Express) {
       console.log('Attempting to create booking with data:', bookingData);
 
       const [newBooking] = await db.insert(bookings)
-        .values(bookingData)
+        .values([bookingData])
         .returning();
 
       console.log('Created new booking:', newBooking);
