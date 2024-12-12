@@ -5,10 +5,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation, useParams } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import BookingForm from "@/components/BookingForm";
+import { BookingFormData } from "@/types/booking";
 
-import type { Booking } from "@db/schema";
-
-interface BookingWithDetails extends Booking {
+interface BookingWithDetails extends BookingFormData {
   driverName?: string;
 }
 
@@ -24,7 +23,15 @@ export default function EditBooking() {
       if (!response.ok) {
         throw new Error("Failed to fetch booking details");
       }
-      return response.json();
+      const data = await response.json();
+      return {
+        ...data,
+        pickupDate: new Date(data.pickupDate),
+        lastLocationUpdate: data.lastLocationUpdate ? new Date(data.lastLocationUpdate) : null,
+        estimatedArrivalTime: data.estimatedArrivalTime ? new Date(data.estimatedArrivalTime) : null,
+        createdAt: data.createdAt ? new Date(data.createdAt) : null,
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : null,
+      };
     },
   });
 
@@ -86,11 +93,7 @@ export default function EditBooking() {
           <BookingForm 
             isAdminForm={true} 
             onSuccess={handleSuccess}
-            defaultValues={{
-              ...booking,
-              userId: booking.userId?.toString(),
-              pickupDate: new Date(booking.pickupDate),
-            }}
+            defaultValues={booking}
           />
         </CardContent>
       </Card>
