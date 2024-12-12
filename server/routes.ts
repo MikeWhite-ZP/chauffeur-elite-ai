@@ -1,17 +1,16 @@
 import { Express } from "express";
 import { db } from "../db";
-import { bookings } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { bookings, users, chauffeurs } from "@db/schema";
+import { eq, desc } from "drizzle-orm";
 import { setupAuth } from "./auth";
 
 export function registerRoutes(app: Express) {
-  // Set up authentication routes
   setupAuth(app);
 
   // Get user's bookings
   app.get("/api/bookings", async (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated");
+      return res.status(403).send("Unauthorized");
     }
 
     try {
@@ -19,71 +18,100 @@ export function registerRoutes(app: Express) {
         .select()
         .from(bookings)
         .where(eq(bookings.userId, req.user!.id))
-        .orderBy(bookings.pickupDate);
+        .orderBy(desc(bookings.pickupDate));
 
       res.json(userBookings);
     } catch (error) {
-      console.error("Error fetching bookings:", error);
+      console.error("Error fetching user bookings:", error);
       res.status(500).send("Error fetching bookings");
     }
   });
 
-  // Create new booking
-  app.post("/api/bookings", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated");
+  // Admin: Get all bookings with user details
+  app.get("/api/admin/bookings", async (req, res) => {
+    if (!req.isAuthenticated() || req.user?.role !== 'admin') {
+      return res.status(403).send("Unauthorized");
     }
 
     try {
-      const [booking] = await db
-        .insert(bookings)
-        .values({
-          userId: req.user!.id,
-          categoryId: req.body.categoryId,
-          pickupLocation: req.body.pickupLocation,
-          dropoffLocation: req.body.dropoffLocation,
-          serviceType: req.body.serviceType,
-          pickupDate: new Date(req.body.date),
-          passengerCount: req.body.passengerCount || 1,
-          status: 'pending',
-          stops: req.body.stops || [],
-          basePrice: req.body.basePrice,
-          totalFare: req.body.totalFare,
+      const allBookings = await db
+        .select({
+          id: bookings.id,
+          userId: bookings.userId,
+          pickupLocation: bookings.pickupLocation,
+          dropoffLocation: bookings.dropoffLocation,
+          pickupDate: bookings.pickupDate,
+          status: bookings.status,
+          totalFare: bookings.totalFare,
+          passengerCount: bookings.passengerCount,
+          chauffeurId: bookings.chauffeurId,
+          vehicleId: bookings.vehicleId,
+          trackingEnabled: bookings.trackingEnabled,
+          lastKnownLatitude: bookings.lastKnownLatitude,
+          lastKnownLongitude: bookings.lastKnownLongitude,
+          lastLocationUpdate: bookings.lastLocationUpdate,
         })
-        .returning();
+        .from(bookings)
+        .orderBy(desc(bookings.pickupDate));
 
-      res.json(booking);
+      res.json(allBookings);
     } catch (error) {
-      console.error("Error creating booking:", error);
-      res.status(500).send("Error creating booking");
+      console.error("Error fetching all bookings:", error);
+      res.status(500).send("Error fetching bookings");
     }
   });
 
-  // Sync offline bookings
-  app.post("/api/bookings/sync", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated");
+  // Update booking status
+  app.post("/api/admin/bookings/:id/status", async (req, res) => {
+    if (!req.isAuthenticated() || req.user?.role !== 'admin') {
+      return res.status(403).send("Unauthorized");
+    }
+
+    const bookingId = parseInt(req.params.id);
+    const { status } = req.body;
+
+    try {
+      await db
+        .update(bookings)
+        .set({ status })
+        .where(eq(bookings.id, bookingId));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating booking status:", error);
+      res.status(500).send("Error updating booking status");
+    }
+  });
+
+  // Get active bookings for tracking
+  app.get("/api/admin/active-bookings", async (req, res) => {
+    if (!req.isAuthenticated() || req.user?.role !== 'admin') {
+      return res.status(403).send("Unauthorized");
     }
 
     try {
-      const pendingBookings = req.body;
-      const syncedBookings = await Promise.all(
-        pendingBookings.map(async (booking: any) => {
-          const [newBooking] = await db
-            .insert(bookings)
-            .values({
-              ...booking,
-              userId: req.user!.id,
-            })
-            .returning();
-          return newBooking;
+      const activeBookings = await db
+        .select({
+          id: bookings.id,
+          driverId: chauffeurs.id,
+          passengerId: bookings.userId,
+          status: bookings.status,
+          pickupLocation: bookings.pickupLocation,
+          dropoffLocation: bookings.dropoffLocation,
+          lastKnownLatitude: bookings.lastKnownLatitude,
+          lastKnownLongitude: bookings.lastKnownLongitude,
+          driverName: users.fullName,
+          passengerName: users.fullName,
         })
-      );
+        .from(bookings)
+        .innerJoin(chauffeurs, eq(bookings.chauffeurId, chauffeurs.id))
+        .innerJoin(users, eq(chauffeurs.userId, users.id))
+        .where(eq(bookings.status, 'in_progress'));
 
-      res.json(syncedBookings);
+      res.json(activeBookings);
     } catch (error) {
-      console.error("Error syncing bookings:", error);
-      res.status(500).send("Error syncing bookings");
+      console.error("Error fetching active bookings:", error);
+      res.status(500).send("Error fetching active bookings");
     }
   });
 }

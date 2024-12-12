@@ -11,19 +11,16 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 
-interface Booking {
-  id: number;
-  userId: number;
-  pickupLocation: string;
-  dropoffLocation: string;
-  pickupDate: string;
-  status: string;
-  totalFare: string;
-  passengerCount: number;
+import type { Booking } from "@db/schema";
+
+// Additional fields needed for the UI
+interface BookingWithDetails extends Booking {
+  driverName?: string;
+  passengerName?: string;
 }
 
 export default function BookingManagement() {
-  const { data: bookings, isLoading, refetch } = useQuery<Booking[]>({
+  const { data: bookings, isLoading, refetch } = useQuery<BookingWithDetails[]>({
     queryKey: ["all-bookings"],
     queryFn: async () => {
       const response = await fetch("/api/admin/bookings");
@@ -128,7 +125,7 @@ export default function BookingManagement() {
                 </div>
                 <div className="space-y-2">
                   <Select
-                    value={booking.status}
+                    defaultValue={booking.status || undefined}
                     onValueChange={(value) => handleStatusChange(booking.id, value)}
                   >
                     <SelectTrigger className="w-[180px]">
