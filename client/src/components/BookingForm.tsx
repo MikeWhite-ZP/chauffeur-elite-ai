@@ -317,28 +317,22 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
             )}
           </div>
           <div className="md:col-span-2">
-            <Label htmlFor="pickupLocation">Pick-Up Location</Label>
-            <Input
-              type="text"
-              id="pickupLocation"
-              {...register("pickupLocation", { required: true })}
+            <LocationAutocomplete
+              label="Pick-Up Location"
+              value={watch("pickupLocation")}
+              onChange={(value) => setValue("pickupLocation", value)}
               placeholder="Enter pick-up address"
+              error={errors.pickupLocation?.message}
             />
-            {errors.pickupLocation && (
-              <p className="text-sm text-red-500">Pick-up location is required</p>
-            )}
           </div>
           <div className="md:col-span-2">
-            <Label htmlFor="dropoffLocation">Drop-off Location</Label>
-            <Input
-              type="text"
-              id="dropoffLocation"
-              {...register("dropoffLocation", { required: true })}
+            <LocationAutocomplete
+              label="Drop-off Location"
+              value={watch("dropoffLocation")}
+              onChange={(value) => setValue("dropoffLocation", value)}
               placeholder="Enter drop-off address"
+              error={errors.dropoffLocation?.message}
             />
-            {errors.dropoffLocation && (
-              <p className="text-sm text-red-500">Drop-off location is required</p>
-            )}
           </div>
           <div className="md:col-span-2">
             <Label htmlFor="tripNotes">Trip Notes</Label>
