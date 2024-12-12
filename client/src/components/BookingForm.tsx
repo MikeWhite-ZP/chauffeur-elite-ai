@@ -286,6 +286,7 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
               id="pickupDate"
               {...register("pickupDate", { required: true })}
               min={new Date().toISOString().split('T')[0]}
+              defaultValue={defaultValues?.pickupDate ? new Date(defaultValues.pickupDate).toISOString().split('T')[0] : undefined}
             />
             {errors.pickupDate && (
               <p className="text-sm text-red-500">Pick-up date is required</p>
