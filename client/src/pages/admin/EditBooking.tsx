@@ -25,9 +25,14 @@ export default function EditBooking() {
       }
       const data = await response.json();
       console.log('Fetched booking data:', data);
+      
+      // Ensure proper date conversion
+      const pickupDate = data.pickupDate ? new Date(data.pickupDate) : new Date();
+      console.log('Converted pickup date:', pickupDate);
+      
       return {
         ...data,
-        pickupDate: new Date(data.pickupDate),
+        pickupDate,
         serviceType: data.serviceType || undefined,
         vehicleType: data.vehicleType || undefined,
         basePrice: data.basePrice?.toString() || "0",
