@@ -17,7 +17,7 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<BookingFormData>({
     defaultValues: {
       serviceType: defaultValues?.serviceType,
-      pickupDate: defaultValues?.pickupDate instanceof Date ? defaultValues.pickupDate : new Date(),
+      pickupDate: defaultValues?.pickupDate ? new Date(defaultValues.pickupDate) : new Date(),
       pickupTime: defaultValues?.pickupTime || '',
       pickupLocation: defaultValues?.pickupLocation || '',
       dropoffLocation: defaultValues?.dropoffLocation || '',
@@ -286,14 +286,19 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
               id="pickupDate"
               {...register("pickupDate", { 
                 required: true,
-                setValueAs: (value) => new Date(value)
+                setValueAs: (value) => {
+                  const date = new Date(value);
+                  date.setHours(12, 0, 0, 0);
+                  return date;
+                }
               })}
               min={new Date().toISOString().split('T')[0]}
-              defaultValue={defaultValues?.pickupDate instanceof Date ? defaultValues.pickupDate.toISOString().split('T')[0] : undefined}
+              defaultValue={defaultValues?.pickupDate ? new Date(defaultValues.pickupDate).toISOString().split('T')[0] : undefined}
               onChange={(e) => {
                 const date = new Date(e.target.value);
-                date.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
+                date.setHours(12, 0, 0, 0);
                 setValue('pickupDate', date);
+                console.log('Date changed:', date, date.toISOString());
               }}
             />
             {errors.pickupDate && (

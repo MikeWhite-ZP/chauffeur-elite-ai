@@ -27,10 +27,17 @@ export default function EditBooking() {
       console.log('Fetched booking data:', data);
       
       // Ensure proper date conversion
-      const pickupDate = data.pickupDate ? new Date(data.pickupDate) : new Date();
-      console.log('Converted pickup date:', pickupDate);
+      let pickupDate;
+      if (data.pickupDate) {
+        pickupDate = new Date(data.pickupDate);
+        pickupDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
+      } else {
+        pickupDate = new Date();
+        pickupDate.setHours(12, 0, 0, 0);
+      }
+      console.log('Converted pickup date:', pickupDate, pickupDate.toISOString());
       
-      return {
+      const formattedData = {
         ...data,
         pickupDate,
         serviceType: data.serviceType || undefined,
