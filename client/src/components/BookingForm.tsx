@@ -23,7 +23,18 @@ interface BookingFormProps {
 }
 
 export default function BookingForm({ isAdminForm = false, onSuccess }: BookingFormProps) {
-  const { register, handleSubmit, formState: { errors } } = useForm<BookingFormData>();
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<BookingFormData>({
+    defaultValues: {
+      serviceType: undefined,
+      pickupDate: '',
+      pickupTime: '',
+      pickupLocation: '',
+      dropoffLocation: '',
+      passengerCount: '',
+      totalFare: '',
+      specialRequests: ''
+    }
+  });
   const { toast } = useToast();
 
   const onSubmit = async (data: BookingFormData) => {
@@ -96,11 +107,11 @@ export default function BookingForm({ isAdminForm = false, onSuccess }: BookingF
       <div className="space-y-2">
         <Label htmlFor="serviceType">Service Type</Label>
         <Select
-          defaultValue={undefined}
           onValueChange={(value) => {
-            register("serviceType", { required: true }).onChange({ target: { value } });
+            register("serviceType").onChange({
+              target: { name: "serviceType", value }
+            });
           }}
-          {...register("serviceType", { required: true })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select service type" />
