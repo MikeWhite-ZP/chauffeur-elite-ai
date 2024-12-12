@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormControl, FormItem, FormMessage } from "@/components/ui/form";
@@ -25,39 +25,74 @@ export default function LocationAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  console.log('Google Maps API Key available:', !!apiKey);
+  const debug = import.meta.env.VITE_DEBUG === 'true';
+
+  if (debug) {
+    console.log('Google Maps API Key available:', !!apiKey);
+    console.log('Current value:', value);
+  }
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: apiKey || "",
     libraries,
   });
 
-  console.log('Google Maps Script Status:', { isLoaded, loadError, isInitialized });
+  if (debug) {
+    console.log('Google Maps Script Status:', { 
+      isLoaded, 
+      hasLoadError: !!loadError, 
+      isInitialized,
+      hasInitError: !!initError
+    });
+  }
+
+  const handlePlaceChange = useCallback(() => {
+    if (!autocompleteRef.current) return;
+
+    try {
+      const place = autocompleteRef.current.getPlace();
+      if (debug) {
+        console.log('Place selected:', place);
+      }
+
+      if (place?.formatted_address) {
+        onChange(place.formatted_address);
+      }
+    } catch (error) {
+      console.error('Error handling place change:', error);
+      setInitError('Failed to process selected address');
+    }
+  }, [onChange, debug]);
 
   useEffect(() => {
     if (!isLoaded || !inputRef.current || isInitialized) return;
 
     try {
-      // Initialize Google Places Autocomplete
+      if (!window.google?.maps?.places) {
+        throw new Error('Google Maps Places API not available');
+      }
+
+      if (debug) {
+        console.log('Initializing Google Places Autocomplete');
+      }
+
       autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
         componentRestrictions: { country: "us" },
         fields: ["formatted_address", "geometry", "name"],
         types: ["address", "establishment"]
       });
 
-      // Add place_changed event listener
-      const listener = autocompleteRef.current.addListener("place_changed", () => {
-        const place = autocompleteRef.current?.getPlace();
-        if (place?.formatted_address) {
-          onChange(place.formatted_address);
-        }
-      });
-
+      const listener = autocompleteRef.current.addListener("place_changed", handlePlaceChange);
       setIsInitialized(true);
+      setInitError(null);
 
-      // Cleanup
+      if (debug) {
+        console.log('Google Places Autocomplete initialized successfully');
+      }
+
       return () => {
         if (google && listener) {
           google.maps.event.removeListener(listener);
@@ -68,11 +103,14 @@ export default function LocationAutocomplete({
       };
     } catch (error) {
       console.error('Error initializing Google Places Autocomplete:', error);
+      setInitError(error instanceof Error ? error.message : 'Failed to initialize location search');
+      setIsInitialized(false);
     }
-  }, [isLoaded, onChange, isInitialized]);
+  }, [isLoaded, handlePlaceChange, isInitialized, debug]);
 
-  if (loadError) {
-    console.error("Error loading Google Maps:", loadError);
+  const errorMessage = loadError?.message || initError;
+
+  if (errorMessage) {
     return (
       <FormItem>
         <Label>{label}</Label>
@@ -85,7 +123,7 @@ export default function LocationAutocomplete({
             className="border-destructive"
           />
         </FormControl>
-        <FormMessage>Location search is currently unavailable: {loadError.message}</FormMessage>
+        <FormMessage>Location search is currently unavailable: {errorMessage}</FormMessage>
       </FormItem>
     );
   }
