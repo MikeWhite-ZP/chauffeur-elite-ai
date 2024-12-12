@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import LocationAutocomplete from "./LocationAutocomplete";
+import BookingFormMap from "./BookingFormMap";
 
 import { BookingFormData } from "@/types/booking";
 
@@ -333,6 +334,13 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
               onChange={(value) => setValue("dropoffLocation", value)}
               placeholder="Enter drop-off address"
               error={errors.dropoffLocation?.message}
+            />
+          </div>
+          <div className="md:col-span-2">
+            <BookingFormMap
+              pickupLocation={watch("pickupLocation")}
+              dropoffLocation={watch("dropoffLocation")}
+              className="w-full h-[400px] rounded-lg overflow-hidden mb-4"
             />
           </div>
           <div className="md:col-span-2">
