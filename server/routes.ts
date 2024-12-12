@@ -4,6 +4,7 @@ import { bookings, users, chauffeurs } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
+import { nanoid } from 'nanoid';
 
 // Extend Express.User to include role
 declare global {
@@ -51,24 +52,51 @@ function setupBookingRoutes(app: Express) {
       const allBookings = await db
         .select({
           id: bookings.id,
+          tripId: bookings.tripId,
           userId: bookings.userId,
+          accountId: bookings.accountId,
+          billingContact: bookings.billingContact,
+          companyName: bookings.companyName,
+          passengerFirstName: bookings.passengerFirstName,
+          passengerLastName: bookings.passengerLastName,
+          passengerPhone: bookings.passengerPhone,
+          passengerEmail: bookings.passengerEmail,
+          poClientRef: bookings.poClientRef,
+          pickupDate: bookings.pickupDate,
+          pickupTime: bookings.pickupTime,
           pickupLocation: bookings.pickupLocation,
           dropoffLocation: bookings.dropoffLocation,
-          pickupDate: bookings.pickupDate,
-          status: bookings.status,
-          totalFare: bookings.totalFare,
-          passengerCount: bookings.passengerCount,
+          airportCode: bookings.airportCode,
+          airportName: bookings.airportName,
+          airlineCode: bookings.airlineCode,
+          airlineName: bookings.airlineName,
+          flightNumber: bookings.flightNumber,
+          tripNotes: bookings.tripNotes,
+          jobStatus: bookings.jobStatus,
+          additionalRequests: bookings.additionalRequests,
           serviceType: bookings.serviceType,
-          specialRequests: bookings.specialRequests,
+          vehicleType: bookings.vehicleType,
           chauffeurId: bookings.chauffeurId,
-          createdAt: bookings.createdAt,
-          passengerName: users.fullName
+          vehicleId: bookings.vehicleId,
+          basePrice: bookings.basePrice,
+          gratuityFee: bookings.gratuityFee,
+          extraStopsFee: bookings.extraStopsFee,
+          discount: bookings.discount,
+          tolls: bookings.tolls,
+          parking: bookings.parking,
+          creditCardFee: bookings.creditCardFee,
+          grandTotal: bookings.grandTotal,
+          paymentsDeposits: bookings.paymentsDeposits,
+          totalDue: bookings.totalDue,
+          trackingEnabled: bookings.trackingEnabled,
+          lastKnownLatitude: bookings.lastKnownLatitude,
+          lastKnownLongitude: bookings.lastKnownLongitude,
+          lastLocationUpdate: bookings.lastLocationUpdate,
+          estimatedArrivalTime: bookings.estimatedArrivalTime,
+          createdAt: bookings.createdAt
         })
         .from(bookings)
-        .leftJoin(users, eq(bookings.userId, users.id))
         .orderBy(desc(bookings.createdAt));
-
-      console.log("Found bookings:", allBookings);
 
       // Fetch driver details for bookings with chauffeurs
       const bookingsWithDetails = await Promise.all(
@@ -104,7 +132,6 @@ function setupBookingRoutes(app: Express) {
         })
       );
 
-      console.log("Sending bookings with details:", bookingsWithDetails);
       res.json(bookingsWithDetails);
     } catch (error: any) {
       console.error("Error fetching all bookings:", error);
@@ -134,24 +161,55 @@ function setupBookingRoutes(app: Express) {
         });
       }
 
-      // Combine date and time into a single Date object
-      const pickupDateTime = new Date(req.body.pickupDate + ' ' + req.body.pickupTime);
+      // Calculate total price
+      const basePrice = parseFloat(req.body.basePrice);
+      const gratuityFee = parseFloat(req.body.gratuityFee || '0');
+      const extraStopsFee = parseFloat(req.body.extraStopsFee || '0');
+      const discount = parseFloat(req.body.discount || '0');
+      const tolls = parseFloat(req.body.tolls || '0');
+      const parking = parseFloat(req.body.parking || '0');
+      const creditCardFee = parseFloat(req.body.creditCardFee || '0');
+      const paymentsDeposits = parseFloat(req.body.paymentsDeposits || '0');
+
+      const grandTotal = basePrice + gratuityFee + extraStopsFee + tolls + parking + creditCardFee - discount;
+      const totalDue = grandTotal - paymentsDeposits;
       
       const bookingData = {
+        tripId: nanoid(10),
         userId: parseInt(req.body.userId),
+        accountId: req.body.accountId,
+        billingContact: req.body.billingContact,
+        companyName: req.body.companyName,
+        passengerFirstName: req.body.passengerFirstName,
+        passengerLastName: req.body.passengerLastName,
+        passengerPhone: req.body.passengerPhone,
+        passengerEmail: req.body.passengerEmail,
+        poClientRef: req.body.poClientRef,
+        pickupDate: new Date(req.body.pickupDate),
+        pickupTime: req.body.pickupTime,
         pickupLocation: req.body.pickupLocation,
         dropoffLocation: req.body.dropoffLocation,
+        airportCode: req.body.airportCode,
+        airportName: req.body.airportName,
+        airlineCode: req.body.airlineCode,
+        airlineName: req.body.airlineName,
+        flightNumber: req.body.flightNumber,
+        tripNotes: req.body.tripNotes,
+        jobStatus: 'unassigned',
+        additionalRequests: req.body.additionalRequests || [],
         serviceType: req.body.serviceType,
-        pickupDate: pickupDateTime,
-        passengerCount: parseInt(req.body.passengerCount),
-        totalFare: req.body.totalFare.toString(), // Convert to string as per schema
-        specialRequests: req.body.specialRequests || null,
-        status: 'pending',
-        paymentStatus: 'pending',
-        basePrice: req.body.totalFare.toString(), // Convert to string as per schema
-        categoryId: 1, // Default category
-        trackingEnabled: false,
-        stops: [] as string[], // Explicitly type as string array
+        vehicleType: req.body.vehicleType,
+        basePrice: basePrice.toString(),
+        gratuityFee: gratuityFee.toString(),
+        extraStopsFee: extraStopsFee.toString(),
+        discount: discount.toString(),
+        tolls: tolls.toString(),
+        parking: parking.toString(),
+        creditCardFee: creditCardFee.toString(),
+        grandTotal: grandTotal.toString(),
+        paymentsDeposits: paymentsDeposits.toString(),
+        totalDue: totalDue.toString(),
+        trackingEnabled: false
       };
       
       console.log('Attempting to create booking with data:', bookingData);
@@ -160,30 +218,8 @@ function setupBookingRoutes(app: Express) {
         .values(bookingData)
         .returning();
 
-      // Fetch additional details for the response
-      const [bookingWithDetails] = await db
-        .select({
-          id: bookings.id,
-          userId: bookings.userId,
-          pickupLocation: bookings.pickupLocation,
-          dropoffLocation: bookings.dropoffLocation,
-          pickupDate: bookings.pickupDate,
-          status: bookings.status,
-          totalFare: bookings.totalFare,
-          passengerCount: bookings.passengerCount,
-          serviceType: bookings.serviceType,
-          specialRequests: bookings.specialRequests,
-          chauffeurId: bookings.chauffeurId,
-          createdAt: bookings.createdAt,
-          passengerName: users.fullName
-        })
-        .from(bookings)
-        .leftJoin(users, eq(bookings.userId, users.id))
-        .where(eq(bookings.id, newBooking.id))
-        .limit(1);
-
-      console.log('Created new booking with details:', bookingWithDetails);
-      res.json(bookingWithDetails);
+      console.log('Created new booking:', newBooking);
+      res.json(newBooking);
     } catch (error: any) {
       console.error('Error creating booking:', error);
       res.status(500).send(`Error creating booking: ${error.message}`);
@@ -197,12 +233,12 @@ function setupBookingRoutes(app: Express) {
     }
 
     const bookingId = parseInt(req.params.id);
-    const { status } = req.body;
+    const { jobStatus } = req.body;
 
     try {
       await db
         .update(bookings)
-        .set({ status })
+        .set({ jobStatus })
         .where(eq(bookings.id, bookingId));
 
       res.json({ success: true });

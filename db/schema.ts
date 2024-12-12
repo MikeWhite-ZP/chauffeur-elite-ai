@@ -122,36 +122,69 @@ export const chauffeurs = pgTable("chauffeurs", {
 // Bookings Table
 export const bookings = pgTable("bookings", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  tripId: text("trip_id").unique().notNull(),
   userId: integer("user_id").references(() => users.id),
+  accountId: text("account_id"),
+  
+  // Billing and Company Information
+  billingContact: text("billing_contact"),
+  companyName: text("company_name"),
+  
+  // Passenger Information
+  passengerFirstName: text("passenger_first_name").notNull(),
+  passengerLastName: text("passenger_last_name").notNull(),
+  passengerPhone: text("passenger_phone").notNull(),
+  passengerEmail: text("passenger_email").notNull(),
+  poClientRef: text("po_client_ref"), // PO/Client Reference Number
+  
+  // Pickup and Dropoff Details
+  pickupDate: timestamp("pickup_date").notNull(),
+  pickupTime: text("pickup_time").notNull(),
+  pickupLocation: text("pickup_location").notNull(),
+  dropoffLocation: text("dropoff_location").notNull(),
+  
+  // Airport Information
+  airportCode: text("airport_code"),
+  airportName: text("airport_name"),
+  airlineCode: text("airline_code"),
+  airlineName: text("airline_name"),
+  flightNumber: text("flight_number"),
+  
+  // Trip Details
+  tripNotes: text("trip_notes"),
+  jobStatus: text("job_status", { 
+    enum: ['unassigned', 'assigned', 'dispatched', 'on_the_way', 'arrived', 
+           'passenger_on_board', 'passenger_dropped_off', 'done'] 
+  }).default('unassigned'),
+  additionalRequests: json("additional_requests").default([]), // Array of requests like child seat, booster, etc.
+  
+  // Service and Vehicle Details
+  serviceType: text("service_type").notNull(),
+  vehicleType: text("vehicle_type").notNull(),
   chauffeurId: integer("chauffeur_id").references(() => chauffeurs.id),
   vehicleId: integer("vehicle_id").references(() => vehicles.id),
   categoryId: integer("category_id").references(() => fleetCategories.id),
-  locationId: integer("location_id").references(() => locations.id),
-  couponId: integer("coupon_id").references(() => coupons.id),
-  pickupLocation: text("pickup_location").notNull(),
-  dropoffLocation: text("dropoff_location").notNull(),
-  stops: text("stops").array(),
-  serviceType: text("service_type").notNull(), // hourly, destination
-  pickupDate: timestamp("pickup_date").notNull(),
-  returnDate: timestamp("return_date"),
-  duration: integer("duration"), // in hours, for hourly bookings
-  distance: decimal("distance"), // in miles, for destination bookings
-  specialRequests: text("special_requests"),
-  passengerCount: integer("passenger_count").notNull(),
-  basePrice: decimal("base_price").notNull(),
-  distancePrice: decimal("distance_price"),
-  hourlyPrice: decimal("hourly_price"),
-  locationMultiplier: decimal("location_multiplier"),
-  discountAmount: decimal("discount_amount"),
-  totalFare: decimal("total_fare").notNull(),
-  status: text("status").default("pending"), // pending, confirmed, in_progress, completed, cancelled
-  paymentStatus: text("payment_status").default("pending"),
-  paymentMethod: text("payment_method"),
+  
+  // Pricing Breakdown
+  basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
+  gratuityFee: decimal("gratuity_fee", { precision: 10, scale: 2 }).default('0'),
+  extraStopsFee: decimal("extra_stops_fee", { precision: 10, scale: 2 }).default('0'),
+  discount: decimal("discount", { precision: 10, scale: 2 }).default('0'),
+  tolls: decimal("tolls", { precision: 10, scale: 2 }).default('0'),
+  parking: decimal("parking", { precision: 10, scale: 2 }).default('0'),
+  creditCardFee: decimal("credit_card_fee", { precision: 10, scale: 2 }).default('0'),
+  grandTotal: decimal("grand_total", { precision: 10, scale: 2 }).notNull(),
+  paymentsDeposits: decimal("payments_deposits", { precision: 10, scale: 2 }).default('0'),
+  totalDue: decimal("total_due", { precision: 10, scale: 2 }).notNull(),
+  
+  // Location Tracking
   trackingEnabled: boolean("tracking_enabled").default(false),
   lastKnownLatitude: decimal("last_known_latitude", { precision: 10, scale: 7 }),
   lastKnownLongitude: decimal("last_known_longitude", { precision: 10, scale: 7 }),
   lastLocationUpdate: timestamp("last_location_update"),
   estimatedArrivalTime: timestamp("estimated_arrival_time"),
+  
+  // System Fields
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
