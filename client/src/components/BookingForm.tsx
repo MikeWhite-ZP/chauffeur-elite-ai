@@ -92,21 +92,18 @@ export default function BookingForm({ isAdminForm = false, onSuccess }: BookingF
           }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select vehicle type" />
+            <SelectValue placeholder="Select service type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="business-sedan">Business Sedan</SelectItem>
-            <SelectItem value="business-suv">Business SUV</SelectItem>
-            <SelectItem value="business-van">Business Van</SelectItem>
-            <SelectItem value="first-class-sedan">First Class Sedan</SelectItem>
-            <SelectItem value="first-class-suv">First Class SUV</SelectItem>
+            <SelectItem value="hourly">Hourly Service</SelectItem>
+            <SelectItem value="point-to-point">Point-to-Point Transfer</SelectItem>
+            <SelectItem value="airport">Airport Transfer</SelectItem>
+            <SelectItem value="event">Event Transportation</SelectItem>
+            <SelectItem value="corporate">Corporate Service</SelectItem>
           </SelectContent>
         </Select>
         {errors.serviceType && (
-          <p className="text-sm text-red-500">Vehicle type is required</p>
-        )}
-        {errors.serviceType && (
-          <p className="text-sm text-red-500">Service type is required</p>
+          <p className="text-sm text-red-500">Please select a service type</p>
         )}
       </div>
 
