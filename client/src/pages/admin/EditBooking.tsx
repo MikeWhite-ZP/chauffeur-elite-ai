@@ -24,9 +24,12 @@ export default function EditBooking() {
         throw new Error("Failed to fetch booking details");
       }
       const data = await response.json();
+      console.log('Fetched booking data:', data);
       return {
         ...data,
         pickupDate: new Date(data.pickupDate),
+        serviceType: data.serviceType || undefined,
+        vehicleType: data.vehicleType || undefined,
         basePrice: data.basePrice?.toString() || "0",
         gratuityFee: data.gratuityFee?.toString() || "0",
         extraStopsFee: data.extraStopsFee?.toString() || "0",

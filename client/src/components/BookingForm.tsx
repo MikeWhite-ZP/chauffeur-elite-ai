@@ -230,6 +230,7 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
           <div>
             <Label htmlFor="serviceType">Service Type</Label>
             <Select
+              value={watch('serviceType')}
               onValueChange={(value) => {
                 setValue("serviceType", value as BookingFormData['serviceType']);
               }}
@@ -252,6 +253,7 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
           <div>
             <Label htmlFor="vehicleType">Vehicle Type</Label>
             <Select
+              value={watch('vehicleType')}
               onValueChange={(value) => {
                 setValue("vehicleType", value);
               }}
