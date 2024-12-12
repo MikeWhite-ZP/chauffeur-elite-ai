@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import "./index.css";
@@ -9,7 +9,6 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 30, // 30 minutes
-      refetchOnWindowFocus: true,
       refetchOnMount: true,
       refetchOnReconnect: true,
       retry: 3,
@@ -82,16 +81,28 @@ function Router() {
             <Route path="/dashboard" component={DashboardPage} />
             {user.role === 'admin' && <AdminRoutes />}
             {user.role === 'driver' && (
-              <>
-                <Route path="/driver/my-assignments" component={lazy(() => import('./pages/driver/MyAssignments'))} />
-                <Route path="/driver/schedule" component={lazy(() => import('./pages/driver/Schedule'))} />
-              </>
+              <ErrorBoundary>
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-screen">
+                    <Loader2 className="h-8 w-8 animate-spin text-border" />
+                  </div>
+                }>
+                  <Route path="/driver/my-assignments" component={lazy(() => import('./pages/driver/MyAssignments'))} />
+                  <Route path="/driver/schedule" component={lazy(() => import('./pages/driver/Schedule'))} />
+                </Suspense>
+              </ErrorBoundary>
             )}
             {user.role === 'passenger' && (
-              <>
-                <Route path="/passenger/my-bookings" component={lazy(() => import('./pages/passenger/MyBookings'))} />
-                <Route path="/passenger/track/:bookingId" component={lazy(() => import('./pages/passenger/TrackRide'))} />
-              </>
+              <ErrorBoundary>
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-screen">
+                    <Loader2 className="h-8 w-8 animate-spin text-border" />
+                  </div>
+                }>
+                  <Route path="/passenger/my-bookings" component={lazy(() => import('./pages/passenger/MyBookings'))} />
+                  <Route path="/passenger/track/:bookingId" component={lazy(() => import('./pages/passenger/TrackRide'))} />
+                </Suspense>
+              </ErrorBoundary>
             )}
           </>
         )}

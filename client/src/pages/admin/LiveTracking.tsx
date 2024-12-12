@@ -18,16 +18,27 @@ interface ActiveBooking {
 }
 
 export default function LiveTracking() {
-  const { data: activeBookings, isLoading } = useQuery<ActiveBooking[]>({
+  const { data: activeBookings, isLoading, error } = useQuery<ActiveBooking[]>({
     queryKey: ['active-bookings'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/active-bookings');
+      const response = await fetch('/api/admin/active-bookings', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       if (!response.ok) {
-        throw new Error('Failed to fetch active bookings');
+        const error = await response.text();
+        throw new Error(error || 'Failed to fetch active bookings');
       }
       return response.json();
     },
-    refetchInterval: 10000 // Refresh every 10 seconds
+    refetchInterval: 5000, // Refresh every 5 seconds
+    retry: 3,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('Error fetching active bookings:', error);
+    }
   });
 
   if (isLoading) {

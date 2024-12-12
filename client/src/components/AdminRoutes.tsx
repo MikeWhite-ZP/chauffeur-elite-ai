@@ -13,7 +13,15 @@ const FleetManagement = lazy(() => import('../pages/admin/FleetManagement'));
 const ReportsAndAnalytics = lazy(() => import('../pages/admin/ReportsAndAnalytics'));
 
 export function AdminRoutes() {
-  const { user } = useUser();
+  const { user, isLoading } = useUser();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
 
   if (!user || user.role !== 'admin') {
     return null;
@@ -28,12 +36,14 @@ export function AdminRoutes() {
           </div>
         }
       >
-        <Route path="/admin/live-tracking" component={LiveTracking} />
-        <Route path="/admin/driver-approvals" component={DriverApprovals} />
-        <Route path="/admin/booking-management" component={BookingManagement} />
-        <Route path="/admin/user-management" component={UserManagement} />
-        <Route path="/admin/fleet-management" component={FleetManagement} />
-        <Route path="/admin/reports-and-analytics" component={ReportsAndAnalytics} />
+        <div className="container mx-auto px-4 py-8">
+          <Route path="/admin/live-tracking" component={LiveTracking} />
+          <Route path="/admin/driver-approvals" component={DriverApprovals} />
+          <Route path="/admin/booking-management" component={BookingManagement} />
+          <Route path="/admin/user-management" component={UserManagement} />
+          <Route path="/admin/fleet-management" component={FleetManagement} />
+          <Route path="/admin/reports-and-analytics" component={ReportsAndAnalytics} />
+        </div>
       </Suspense>
     </ErrorBoundary>
   );
