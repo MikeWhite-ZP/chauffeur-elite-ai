@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 
 export function AdminNavigation() {
   return (
-    <NavigationMenu className="hidden md:flex relative">
-      <NavigationMenuList className="absolute top-0 left-[250px]">
+    <NavigationMenu className="hidden md:flex">
+      <NavigationMenuList className="ml-[250px]">
         <NavigationMenuItem>
           <Link href="/admin/live-tracking">
             <NavigationMenuLink

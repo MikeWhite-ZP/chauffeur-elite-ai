@@ -1,25 +1,38 @@
-import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import TrackingMap from '@/components/TrackingMap';
 import { useQuery } from '@tanstack/react-query';
+import { Badge } from "@/components/ui/badge";
 
 interface ActiveBooking {
   id: number;
-  driverId: number;
-  passengerId: number;
+  chauffeur_id: number;
+  user_id: number;
   status: string;
-  pickupLocation: string;
-  dropoffLocation: string;
-  lastKnownLatitude?: string;
-  lastKnownLongitude?: string;
-  driverName: string;
-  passengerName: string;
+  pickup_location: string;
+  dropoff_location: string;
+  last_known_latitude: string;
+  last_known_longitude: string;
+  vehicle_id: number;
+  service_type: string;
+  tracking_enabled: boolean;
+  estimated_arrival_time?: string | null;
+  chauffeur?: {
+    full_name: string;
+  };
+  vehicle?: {
+    make: string;
+    model: string;
+    license_plate: string;
+  };
+  user?: {
+    full_name: string;
+  };
 }
 
 export default function LiveTracking() {
   const { data: activeBookings, isLoading, error } = useQuery<ActiveBooking[]>({
-    queryKey: ['active-bookings'],
+    queryKey: ['admin', 'active-bookings'],
     queryFn: async () => {
       const response = await fetch('/api/admin/active-bookings', {
         credentials: 'include',
@@ -28,17 +41,11 @@ export default function LiveTracking() {
         },
       });
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Failed to fetch active bookings');
+        throw new Error('Failed to fetch active bookings');
       }
       return response.json();
     },
     refetchInterval: 5000, // Refresh every 5 seconds
-    retry: 3,
-    retryDelay: 1000,
-    onError: (error) => {
-      console.error('Error fetching active bookings:', error);
-    }
   });
 
   if (isLoading) {
@@ -63,6 +70,18 @@ export default function LiveTracking() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-destructive">Error loading active bookings</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <Card>
@@ -78,32 +97,43 @@ export default function LiveTracking() {
                     <Card key={booking.id}>
                       <CardContent className="p-4">
                         <div className="space-y-2">
-                          <p className="font-semibold">Booking #{booking.id}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Driver: {booking.driverName}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Passenger: {booking.passengerName}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Status: {booking.status}
-                          </p>
+                          <div className="flex justify-between items-center">
+                            <p className="font-semibold">Booking #{booking.id}</p>
+                            <Badge variant={booking.status === 'in_progress' ? 'default' : 'secondary'}>
+                              {booking.status}
+                            </Badge>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm text-muted-foreground">
+                              Driver: {booking.chauffeur?.full_name || 'Unassigned'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Passenger: {booking.user?.full_name || 'Unknown'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Vehicle: {booking.vehicle ? `${booking.vehicle.make} ${booking.vehicle.model} (${booking.vehicle.license_plate})` : 'Unassigned'}
+                            </p>
+                          </div>
+                          <div className="pt-2 text-sm">
+                            <p className="font-medium">Pickup: {booking.pickup_location}</p>
+                            <p className="font-medium">Dropoff: {booking.dropoff_location}</p>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
                 {activeBookings.map((booking) => (
-                  booking.lastKnownLatitude && booking.lastKnownLongitude && (
+                  booking.last_known_latitude && booking.last_known_longitude && (
                     <div key={booking.id} className="mb-6">
                       <h3 className="text-lg font-semibold mb-2">
-                        Tracking Booking #{booking.id}
+                        Tracking Booking #{booking.id} - {booking.chauffeur?.full_name}
                       </h3>
                       <TrackingMap
                         bookingId={booking.id}
                         initialPosition={{
-                          lat: parseFloat(booking.lastKnownLatitude),
-                          lng: parseFloat(booking.lastKnownLongitude)
+                          lat: parseFloat(booking.last_known_latitude),
+                          lng: parseFloat(booking.last_known_longitude)
                         }}
                       />
                     </div>
