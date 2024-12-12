@@ -6,14 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 
 type BookingFormData = {
-  serviceType: string;
+  serviceType: 'hourly' | 'point-to-point' | 'airport' | 'event' | 'corporate';
   pickupDate: string;
   pickupTime: string;
   pickupLocation: string;
   dropoffLocation: string;
-  userId?: number;
-  passengerCount: number;
-  totalFare: number;
+  userId?: number | string;
+  passengerCount: number | string;
+  totalFare: number | string;
   specialRequests?: string;
 };
 
@@ -29,14 +29,24 @@ export default function BookingForm({ isAdminForm = false, onSuccess }: BookingF
   const onSubmit = async (data: BookingFormData) => {
     try {
       const endpoint = isAdminForm ? '/api/admin/bookings' : '/api/passenger/bookings';
-      console.log('Submitting booking data:', data);
+      
+      // Format the data before submission
+      const formattedData = {
+        ...data,
+        userId: isAdminForm ? parseInt(data.userId as unknown as string) : undefined,
+        passengerCount: parseInt(data.passengerCount as unknown as string),
+        totalFare: parseFloat(data.totalFare as unknown as string),
+        serviceType: data.serviceType, // Ensure this is included
+      };
+      
+      console.log('Submitting booking data:', formattedData);
       
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(formattedData),
       });
 
       if (!response.ok) {
@@ -88,8 +98,9 @@ export default function BookingForm({ isAdminForm = false, onSuccess }: BookingF
         <Select
           defaultValue={undefined}
           onValueChange={(value) => {
-            register("serviceType").onChange({ target: { value } });
+            register("serviceType", { required: true }).onChange({ target: { value } });
           }}
+          {...register("serviceType", { required: true })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select service type" />
