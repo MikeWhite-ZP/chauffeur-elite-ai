@@ -79,7 +79,18 @@ function Router() {
           <>
             <Route path="/book" component={BookingPage} />
             <Route path="/dashboard" component={DashboardPage} />
-            {user.role === 'admin' && <AdminRoutes />}
+            {user.role === 'admin' && (
+              <ErrorBoundary>
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-screen">
+                    <Loader2 className="h-8 w-8 animate-spin text-border" />
+                  </div>
+                }>
+                  <Route path="/admin/booking-management/new" component={lazy(() => import('./pages/admin/NewBooking'))} />
+                  <AdminRoutes />
+                </Suspense>
+              </ErrorBoundary>
+            )}
             {user.role === 'driver' && (
               <ErrorBoundary>
                 <Suspense fallback={

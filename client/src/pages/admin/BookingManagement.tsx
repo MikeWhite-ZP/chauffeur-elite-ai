@@ -112,23 +112,10 @@ export default function BookingManagement() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Booking Management</CardTitle>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button size="icon" className="ml-auto">
-                <Plus className="h-4 w-4" />
-                <span className="sr-only">Add new booking</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Create New Booking</DialogTitle>
-                <DialogDescription>
-                  Create a new booking for a customer. Fill in all the required information below.
-                </DialogDescription>
-              </DialogHeader>
-              <BookingForm isAdminForm={true} onSuccess={() => refetch()} />
-            </DialogContent>
-          </Dialog>
+          <Button size="icon" className="ml-auto" onClick={() => window.location.href = "/admin/booking-management/new"}>
+            <Plus className="h-4 w-4" />
+            <span className="sr-only">Add new booking</span>
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
