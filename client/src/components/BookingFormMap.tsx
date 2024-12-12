@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { GoogleMap, LoadScript, Marker, DirectionsService, DirectionsRenderer } from '@react-google-maps/api';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Icon } from 'leaflet';
 import { Loader2 } from 'lucide-react';
+import 'leaflet/dist/leaflet.css';
 
-interface Location {
-  lat: number;
-  lng: number;
-}
+// Ensure Leaflet's default icon images are properly loaded
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 interface BookingFormMapProps {
   pickupLocation: string;
@@ -15,80 +17,113 @@ interface BookingFormMapProps {
 }
 
 const defaultCenter = {
-  lat: 29.7604,
+  lat: 29.7604, // Houston coordinates
   lng: -95.3698
 };
 
-export default function BookingFormMap({
-  pickupLocation,
-  dropoffLocation,
-  stops = [],
+// Fix Leaflet's default icon path issues
+delete (Icon.Default.prototype as any)._getIconUrl;
+Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Component to handle map center updates with smooth animation
+function MapUpdater({ position }: { position: { lat: number; lng: number } }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.flyTo([position.lat, position.lng], map.getZoom());
+  }, [map, position]);
+
+  return null;
+}
+
+export default function BookingFormMap({ 
+  pickupLocation, 
+  dropoffLocation, 
+  stops = [], 
   className = "w-full h-[400px] rounded-lg overflow-hidden"
 }: BookingFormMapProps) {
-  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [markers, setMarkers] = useState<Array<{ position: [number, number], label: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const debug = import.meta.env.VITE_DEBUG === 'true';
+  const [error, setError] = useState<string | null>(null);
+  const [center, setCenter] = useState(defaultCenter);
 
   useEffect(() => {
-    if (!pickupLocation || !dropoffLocation) return;
-
-    const geocoder = new google.maps.Geocoder();
-    const waypoints = stops.map(stop => ({ location: stop, stopover: true }));
-
-    const directionsService = new google.maps.DirectionsService();
-
-    Promise.all([
-      new Promise<google.maps.LatLng>((resolve, reject) => {
-        geocoder.geocode({ address: pickupLocation }, (results, status) => {
-          if (status === 'OK' && results?.[0]) {
-            resolve(results[0].geometry.location);
-          } else {
-            reject(new Error('Failed to geocode pickup location'));
-          }
-        });
-      }),
-      new Promise<google.maps.LatLng>((resolve, reject) => {
-        geocoder.geocode({ address: dropoffLocation }, (results, status) => {
-          if (status === 'OK' && results?.[0]) {
-            resolve(results[0].geometry.location);
-          } else {
-            reject(new Error('Failed to geocode dropoff location'));
-          }
-        });
-      })
-    ]).then(([origin, destination]) => {
-      directionsService.route(
-        {
-          origin,
-          destination,
-          waypoints,
-          travelMode: google.maps.TravelMode.DRIVING,
-          optimizeWaypoints: true
-        },
-        (result, status) => {
-          if (status === 'OK') {
-            setDirections(result);
-            setError(null);
-          } else {
-            setError('Failed to calculate route');
-            if (debug) {
-              console.error('Directions request failed:', status);
-            }
-          }
-          setIsLoading(false);
+    const geocodeAddress = async (address: string) => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`
+        );
+        const data = await response.json();
+        if (data && data[0]) {
+          return {
+            lat: parseFloat(data[0].lat),
+            lng: parseFloat(data[0].lon)
+          };
         }
-      );
-    }).catch(err => {
-      setError(err.message);
-      setIsLoading(false);
-      if (debug) {
-        console.error('Error calculating route:', err);
+        throw new Error(`Could not find location: ${address}`);
+      } catch (error) {
+        console.error('Geocoding error:', error);
+        return null;
       }
-    });
-  }, [pickupLocation, dropoffLocation, stops, debug]);
+    };
+
+    const updateMarkers = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const newMarkers: Array<{ position: [number, number], label: string }> = [];
+        
+        if (pickupLocation) {
+          const pickup = await geocodeAddress(pickupLocation);
+          if (pickup) {
+            newMarkers.push({
+              position: [pickup.lat, pickup.lng],
+              label: 'Pickup'
+            });
+            setCenter(pickup);
+          }
+        }
+
+        if (dropoffLocation) {
+          const dropoff = await geocodeAddress(dropoffLocation);
+          if (dropoff) {
+            newMarkers.push({
+              position: [dropoff.lat, dropoff.lng],
+              label: 'Dropoff'
+            });
+          }
+        }
+
+        for (const stop of stops) {
+          const stopLocation = await geocodeAddress(stop);
+          if (stopLocation) {
+            newMarkers.push({
+              position: [stopLocation.lat, stopLocation.lng],
+              label: 'Stop'
+            });
+          }
+        }
+
+        setMarkers(newMarkers);
+      } catch (err) {
+        setError('Failed to load locations on map');
+        console.error('Error updating markers:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    updateMarkers();
+  }, [pickupLocation, dropoffLocation, stops]);
 
   if (error) {
     return (
@@ -98,31 +133,31 @@ export default function BookingFormMap({
     );
   }
 
-  return (
-    <LoadScript googleMapsApiKey={apiKey} loadingElement={
+  if (isLoading) {
+    return (
       <div className={`${className} bg-background/80 flex items-center justify-center`}>
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
-    }>
-      <GoogleMap
-        mapContainerClassName={className}
-        center={defaultCenter}
-        zoom={12}
-        options={{
-          disableDefaultUI: true,
-          zoomControl: true,
-          streetViewControl: true,
-          mapTypeControl: true,
-        }}
-      >
-        {isLoading ? (
-          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : (
-          directions && <DirectionsRenderer directions={directions} />
-        )}
-      </GoogleMap>
-    </LoadScript>
+    );
+  }
+
+  return (
+    <MapContainer
+      center={[center.lat, center.lng]}
+      zoom={13}
+      className={className}
+      scrollWheelZoom={true}
+    >
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      />
+      {markers.map((marker, index) => (
+        <Marker key={index} position={marker.position}>
+          <Popup>{marker.label}</Popup>
+        </Marker>
+      ))}
+      <MapUpdater position={center} />
+    </MapContainer>
   );
 }
