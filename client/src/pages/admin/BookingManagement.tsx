@@ -9,6 +9,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useState } from "react";
+import BookingForm from "@/components/BookingForm";
 import { toast } from "@/hooks/use-toast";
 
 import type { Booking } from "@db/schema";
@@ -93,8 +104,25 @@ export default function BookingManagement() {
   return (
     <div className="container mx-auto px-4 py-8">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Booking Management</CardTitle>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button size="icon" className="ml-auto">
+                <Plus className="h-4 w-4" />
+                <span className="sr-only">Add new booking</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Create New Booking</DialogTitle>
+                <DialogDescription>
+                  Create a new booking for a customer. Fill in all the required information below.
+                </DialogDescription>
+              </DialogHeader>
+              <BookingForm isAdminForm={true} onSuccess={() => refetch()} />
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
