@@ -76,6 +76,7 @@ function Router() {
             <Route path="/dashboard" component={DashboardPage} />
             {user.role === 'admin' && (
               <>
+                <Route path="/admin/live-tracking" component={lazy(() => import('./pages/admin/LiveTracking'))} />
                 <Route path="/admin/driver-approvals" component={lazy(() => import('./pages/admin/DriverApprovals'))} />
                 <Route path="/admin/booking-management" component={lazy(() => import('./pages/admin/BookingManagement'))} />
                 <Route path="/admin/user-management" component={lazy(() => import('./pages/admin/UserManagement'))} />
