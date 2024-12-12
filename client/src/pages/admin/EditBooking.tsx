@@ -43,6 +43,9 @@ export default function EditBooking() {
         createdAt: data.createdAt ? new Date(data.createdAt) : null,
         updatedAt: data.updatedAt ? new Date(data.updatedAt) : null,
       };
+      console.log('Formatted booking data:', formattedData);
+      return formattedData;
+      };
     },
   });
 
