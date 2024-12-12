@@ -28,7 +28,27 @@ export default function NewBooking() {
           <p className="text-sm text-muted-foreground mb-6">
             Create a new booking for a customer. Fill in all the required information below.
           </p>
-          <BookingForm isAdminForm={true} onSuccess={handleSuccess} />
+          <BookingForm 
+            isAdminForm={true} 
+            onSuccess={handleSuccess}
+            defaultValues={{
+              serviceType: 'hourly',
+              vehicleType: 'sedan',
+              pickupDate: new Date(),
+              pickupTime: '',
+              pickupLocation: '',
+              dropoffLocation: '',
+              passengerFirstName: '',
+              passengerLastName: '',
+              passengerPhone: '',
+              passengerEmail: '',
+              jobStatus: 'unassigned',
+              basePrice: "0",
+              totalFare: "0",
+              grandTotal: "0",
+              totalDue: "0"
+            }}
+          />
         </CardContent>
       </Card>
     </div>

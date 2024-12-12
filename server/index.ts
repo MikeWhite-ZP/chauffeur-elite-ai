@@ -68,6 +68,12 @@ app.use((req, res, next) => {
   // Register API routes after auth setup
   registerRoutes(app);
   
+  // Add error handling middleware
+  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+    console.error('Error:', err);
+    res.status(500).json({ error: err.message });
+  });
+  
   const server = createServer(app);
   
   // Set up WebSocket server with proper error handling
