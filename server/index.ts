@@ -153,19 +153,39 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Start the server on port 5000
-  server.listen(5000, '0.0.0.0', () => {
-    log('Server is running on port 5000');
-  });
+  // Initialize server with proper error handling
+  const startServer = () => {
+    return new Promise((resolve, reject) => {
+      try {
+        const PORT = 5000;
+        server.listen(PORT, '0.0.0.0', () => {
+          log(`Server is running on port ${PORT}`);
+          resolve(PORT);
+        });
 
-  // Set up error handlers for the server
-  server.on('error', (error: NodeJS.ErrnoException) => {
-    console.error('Server error:', error);
-    if (error.code === 'EADDRINUSE') {
-      log('Address in use, server cannot start');
-      process.exit(1);
-    }
-  });
+        server.on('error', (error: NodeJS.ErrnoException) => {
+          console.error('Server error:', error);
+          if (error.code === 'EADDRINUSE') {
+            log('Port 5000 is in use, cannot start server');
+            reject(error);
+          } else {
+            log(`Server error: ${error.message}`);
+            reject(error);
+          }
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  // Start server with proper error handling
+  try {
+    await startServer();
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
   
   // Handle graceful shutdown
   process.on('SIGTERM', () => {
