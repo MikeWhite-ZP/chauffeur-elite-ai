@@ -25,9 +25,9 @@ export default function EditBooking() {
       }
       const data = await response.json();
       console.log('Fetched booking data:', data);
-      const formattedData = {
+      return {
         ...data,
-        pickupDate: data.pickupDate ? new Date(data.pickupDate) : new Date(),
+        pickupDate: new Date(data.pickupDate),
         serviceType: data.serviceType || undefined,
         vehicleType: data.vehicleType || undefined,
         basePrice: data.basePrice?.toString() || "0",
@@ -42,9 +42,6 @@ export default function EditBooking() {
         estimatedArrivalTime: data.estimatedArrivalTime ? new Date(data.estimatedArrivalTime) : null,
         createdAt: data.createdAt ? new Date(data.createdAt) : null,
         updatedAt: data.updatedAt ? new Date(data.updatedAt) : null,
-      };
-      console.log('Formatted booking data:', formattedData);
-      return formattedData;
       };
     },
   });
