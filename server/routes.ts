@@ -3,6 +3,17 @@ import { db } from "../db";
 import { bookings, users, chauffeurs } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
 import { setupAuth } from "./auth";
+import { z } from "zod";
+
+// Extend Express.User to include role
+declare global {
+  namespace Express {
+    interface User {
+      id: number;
+      role: 'admin' | 'driver' | 'passenger';
+    }
+  }
+}
 
 export function registerRoutes(app: Express) {
   setupAuth(app);
@@ -45,16 +56,48 @@ export function registerRoutes(app: Express) {
           totalFare: bookings.totalFare,
           passengerCount: bookings.passengerCount,
           chauffeurId: bookings.chauffeurId,
-          vehicleId: bookings.vehicleId,
-          trackingEnabled: bookings.trackingEnabled,
-          lastKnownLatitude: bookings.lastKnownLatitude,
-          lastKnownLongitude: bookings.lastKnownLongitude,
-          lastLocationUpdate: bookings.lastLocationUpdate,
+          passengerName: users.fullName
         })
         .from(bookings)
+        .leftJoin(users, eq(bookings.userId, users.id))
         .orderBy(desc(bookings.pickupDate));
 
-      res.json(allBookings);
+      // Fetch driver details for bookings with chauffeurs
+      const bookingsWithDetails = await Promise.all(
+        allBookings.map(async (booking) => {
+          let driverName = 'Not Assigned';
+          
+          if (booking.chauffeurId) {
+            const chauffeur = await db
+              .select({
+                userId: chauffeurs.userId
+              })
+              .from(chauffeurs)
+              .where(eq(chauffeurs.id, booking.chauffeurId))
+              .limit(1);
+
+            if (chauffeur[0]?.userId) {
+              const driver = await db
+                .select({
+                  fullName: users.fullName
+                })
+                .from(users)
+                .where(eq(users.id, chauffeur[0].userId))
+                .limit(1);
+              
+              driverName = driver[0]?.fullName || 'Unknown Driver';
+            }
+          }
+
+          return {
+            ...booking,
+            driverName,
+            passengerName: booking.passengerName || 'Unknown Passenger'
+          };
+        })
+      );
+
+      res.json(bookingsWithDetails);
     } catch (error) {
       console.error("Error fetching all bookings:", error);
       res.status(500).send("Error fetching bookings");
@@ -93,22 +136,68 @@ export function registerRoutes(app: Express) {
       const activeBookings = await db
         .select({
           id: bookings.id,
-          driverId: chauffeurs.id,
-          passengerId: bookings.userId,
-          status: bookings.status,
           pickupLocation: bookings.pickupLocation,
           dropoffLocation: bookings.dropoffLocation,
+          status: bookings.status,
           lastKnownLatitude: bookings.lastKnownLatitude,
           lastKnownLongitude: bookings.lastKnownLongitude,
-          driverName: users.fullName,
-          passengerName: users.fullName,
+          userId: bookings.userId,
+          chauffeurId: bookings.chauffeurId
         })
         .from(bookings)
-        .innerJoin(chauffeurs, eq(bookings.chauffeurId, chauffeurs.id))
-        .innerJoin(users, eq(chauffeurs.userId, users.id))
         .where(eq(bookings.status, 'in_progress'));
 
-      res.json(activeBookings);
+      // Add driver and passenger names
+      const bookingsWithNames = await Promise.all(
+        activeBookings.map(async (booking) => {
+          let driverName = 'Not Assigned';
+          let passengerName = 'Unknown';
+
+          // Get passenger name
+          if (booking.userId) {
+            const passenger = await db
+              .select({
+                fullName: users.fullName
+              })
+              .from(users)
+              .where(eq(users.id, booking.userId))
+              .limit(1);
+            
+            passengerName = passenger[0]?.fullName || 'Unknown Passenger';
+          }
+
+          // Get driver name if chauffeur is assigned
+          if (booking.chauffeurId) {
+            const chauffeur = await db
+              .select({
+                userId: chauffeurs.userId
+              })
+              .from(chauffeurs)
+              .where(eq(chauffeurs.id, booking.chauffeurId))
+              .limit(1);
+
+            if (chauffeur[0]?.userId) {
+              const driver = await db
+                .select({
+                  fullName: users.fullName
+                })
+                .from(users)
+                .where(eq(users.id, chauffeur[0].userId))
+                .limit(1);
+              
+              driverName = driver[0]?.fullName || 'Unknown Driver';
+            }
+          }
+
+          return {
+            ...booking,
+            driverName,
+            passengerName
+          };
+        })
+      );
+
+      res.json(bookingsWithNames);
     } catch (error) {
       console.error("Error fetching active bookings:", error);
       res.status(500).send("Error fetching active bookings");
