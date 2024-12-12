@@ -121,6 +121,19 @@ function setupBookingRoutes(app: Express) {
     }
 
     try {
+      // First check if user exists
+      const user = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, parseInt(req.body.userId)))
+        .limit(1);
+
+      if (!user || user.length === 0) {
+        return res.status(400).json({
+          error: `User with ID ${req.body.userId} does not exist`
+        });
+      }
+
       // Combine date and time into a single Date object
       const pickupDateTime = new Date(req.body.pickupDate + ' ' + req.body.pickupTime);
       
@@ -131,24 +144,24 @@ function setupBookingRoutes(app: Express) {
         serviceType: req.body.serviceType,
         pickupDate: pickupDateTime,
         passengerCount: parseInt(req.body.passengerCount),
-        totalFare: parseFloat(req.body.totalFare),
+        totalFare: req.body.totalFare.toString(), // Convert to string as per schema
         specialRequests: req.body.specialRequests || null,
         status: 'pending',
         paymentStatus: 'pending',
-        basePrice: req.body.totalFare, // Using totalFare as basePrice for now
+        basePrice: req.body.totalFare.toString(), // Convert to string as per schema
         categoryId: 1, // Default category
         trackingEnabled: false,
-        stops: [],
+        stops: [] as string[], // Explicitly type as string array
       };
-
+      
       console.log('Attempting to create booking with data:', bookingData);
 
-      const newBooking = await db.insert(bookings)
+      const [newBooking] = await db.insert(bookings)
         .values(bookingData)
         .returning();
 
       // Fetch additional details for the response
-      const bookingWithDetails = await db
+      const [bookingWithDetails] = await db
         .select({
           id: bookings.id,
           userId: bookings.userId,
@@ -166,11 +179,11 @@ function setupBookingRoutes(app: Express) {
         })
         .from(bookings)
         .leftJoin(users, eq(bookings.userId, users.id))
-        .where(eq(bookings.id, newBooking[0].id))
+        .where(eq(bookings.id, newBooking.id))
         .limit(1);
 
-      console.log('Created new booking with details:', bookingWithDetails[0]);
-      res.json(bookingWithDetails[0]);
+      console.log('Created new booking with details:', bookingWithDetails);
+      res.json(bookingWithDetails);
     } catch (error: any) {
       console.error('Error creating booking:', error);
       res.status(500).send(`Error creating booking: ${error.message}`);

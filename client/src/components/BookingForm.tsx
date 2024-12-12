@@ -61,9 +61,15 @@ export default function BookingForm({ isAdminForm = false, onSuccess }: BookingF
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Booking submission failed:', errorText);
-        throw new Error('Failed to submit booking');
+        const errorData = await response.json().catch(() => null);
+        console.error('Booking submission failed:', errorData || await response.text());
+        
+        toast({
+          title: "Error",
+          description: errorData?.error || "Failed to submit booking. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
 
       const result = await response.json();
