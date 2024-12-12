@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 export function AdminNavigation() {
   return (
     <NavigationMenu className="hidden md:flex">
-      <NavigationMenuList className="ml-[250px]">
+      <NavigationMenuList>
         <NavigationMenuItem>
           <Link href="/admin/live-tracking">
             <NavigationMenuLink
