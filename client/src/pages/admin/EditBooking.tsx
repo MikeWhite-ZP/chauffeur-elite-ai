@@ -25,9 +25,9 @@ export default function EditBooking() {
       }
       const data = await response.json();
       console.log('Fetched booking data:', data);
-      return {
+      const formattedData = {
         ...data,
-        pickupDate: new Date(data.pickupDate),
+        pickupDate: data.pickupDate ? new Date(data.pickupDate) : new Date(),
         serviceType: data.serviceType || undefined,
         vehicleType: data.vehicleType || undefined,
         basePrice: data.basePrice?.toString() || "0",

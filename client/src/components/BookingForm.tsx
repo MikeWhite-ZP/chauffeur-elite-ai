@@ -285,6 +285,7 @@ export default function BookingForm({ isAdminForm = false, onSuccess, defaultVal
               type="date"
               id="pickupDate"
               {...register("pickupDate", { required: true })}
+              defaultValue={defaultValues?.pickupDate?.toISOString().split('T')[0]}
               min={new Date().toISOString().split('T')[0]}
             />
             {errors.pickupDate && (
