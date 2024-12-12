@@ -26,7 +26,7 @@ interface BookingWithDetails extends Booking {
 export default function BookingDetails() {
   const [, setLocation] = useLocation();
   const params = useParams();
-  const bookingId = parseInt(params.id);
+  const bookingId = params.id ? parseInt(params.id) : 0;
 
   const { data: booking, isLoading, refetch } = useQuery<BookingWithDetails>({
     queryKey: ["booking-details", bookingId],
@@ -221,7 +221,7 @@ export default function BookingDetails() {
                 <p>Service Type: {booking.serviceType}</p>
                 <p>Vehicle Type: {booking.vehicleType}</p>
                 <p>Driver: {booking.driverName || 'Not assigned'}</p>
-                <p>Additional Requests: {booking.additionalRequests?.join(', ') || 'None'}</p>
+                <p>Additional Requests: {Array.isArray(booking.additionalRequests) ? booking.additionalRequests.join(', ') : 'None'}</p>
                 <p>Trip Notes: {booking.tripNotes || 'None'}</p>
               </div>
             </div>
