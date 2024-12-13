@@ -24,6 +24,15 @@ interface AddressAutocompleteProps {
 interface Location {
   display_name: string;
   place_id: number;
+  address?: {
+    road?: string;
+    house_number?: string;
+    city?: string;
+    state?: string;
+    postcode?: string;
+  };
+  lat?: string;
+  lon?: string;
 }
 
 export function AddressAutocomplete({
@@ -45,24 +54,50 @@ export function AddressAutocomplete({
 
     try {
       setIsLoading(true);
-      // Add 'Texas' to the search query to focus results
-      const searchQuery = `${query}, Texas`;
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&countrycodes=us&state=texas&limit=10`,
-        {
-          headers: {
-            'Accept-Language': 'en-US,en',
-            'User-Agent': 'ChauffeurElite/1.0'
-          }
-        }
-      );
+      console.log('Searching for:', query);
+      
+      // Append Texas only if not already mentioned
+      const searchQuery = query.toLowerCase().includes('texas') ? 
+        query : `${query}, Texas, USA`;
+      
+      const url = new URL('https://nominatim.openstreetmap.org/search');
+      url.search = new URLSearchParams({
+        q: searchQuery,
+        format: 'json',
+        countrycodes: 'us',
+        state: 'texas',
+        limit: '10',
+        addressdetails: '1',
+      }).toString();
+      
+      console.log('Fetching from URL:', url.toString());
+      
+      const response = await fetch(url, {
+        headers: {
+          'Accept-Language': 'en-US,en',
+          'User-Agent': 'ChauffeurElite/1.0',
+          'Accept': 'application/json'
+        },
+        mode: 'cors'
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch locations');
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`Failed to fetch locations: ${response.status} ${response.statusText}`);
       }
 
       const data: Location[] = await response.json();
-      setLocations(data);
+      console.log('Received locations:', data);
+      
+      // Filter results to ensure they're in Texas and have address details
+      const texasLocations = data.filter(loc => {
+        if (!loc.address) return false;
+        return loc.address.state?.toLowerCase().includes('texas');
+      });
+      
+      console.log('Filtered Texas locations:', texasLocations);
+      setLocations(texasLocations);
     } catch (error) {
       console.error('Error fetching locations:', error);
       setLocations([]);
@@ -128,21 +163,42 @@ export function AddressAutocomplete({
             <CommandEmpty>No address found.</CommandEmpty>
           ) : (
             <CommandGroup className="max-h-[300px] overflow-auto">
-              {locations.map((location) => (
-                <CommandItem
-                  key={location.place_id}
-                  value={location.display_name}
-                  onSelect={handleSelect}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === location.display_name ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {location.display_name}
-                </CommandItem>
-              ))}
+              {locations.map((location) => {
+                // Format the address in a more readable way
+                const address = location.address;
+                let displayAddress = '';
+                
+                if (address) {
+                  const parts = [];
+                  if (address.house_number && address.road) {
+                    parts.push(`${address.house_number} ${address.road}`);
+                  } else if (address.road) {
+                    parts.push(address.road);
+                  }
+                  if (address.city) parts.push(address.city);
+                  if (address.state) parts.push(address.state);
+                  if (address.postcode) parts.push(address.postcode);
+                  displayAddress = parts.join(', ');
+                } else {
+                  displayAddress = location.display_name;
+                }
+
+                return (
+                  <CommandItem
+                    key={location.place_id}
+                    value={displayAddress}
+                    onSelect={handleSelect}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === displayAddress ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {displayAddress}
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           )}
         </Command>
