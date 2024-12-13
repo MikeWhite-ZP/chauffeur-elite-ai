@@ -15,8 +15,30 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+// Common street names and patterns
+const streetTypes = ["St", "Street", "Ave", "Avenue", "Rd", "Road", "Blvd", "Boulevard", "Ln", "Lane", "Dr", "Drive", "Way", "Ct", "Court", "Pl", "Place"];
+const commonStreets = ["Main", "Park", "Oak", "Maple", "Cedar", "Elm", "Pine", "Washington", "Madison", "Jefferson"];
+const directions = ["N", "North", "S", "South", "E", "East", "W", "West", "NE", "NW", "SE", "SW"];
+
+// Generate common street addresses
+const generateStreetAddresses = () => {
+  const addresses: string[] = [];
+  // Generate addresses with different patterns
+  for (let i = 1; i <= 9999; i += 1000) {
+    for (const street of commonStreets) {
+      for (const type of streetTypes.slice(0, 4)) { // Use main street types
+        addresses.push(`${i} ${street} ${type}, New York, NY ${(10000 + i).toString().slice(1)}`);
+      }
+    }
+  }
+  return addresses;
+};
+
 // Common US addresses format for suggestions
 const commonAddresses = [
+  // Generated Street Addresses
+  ...generateStreetAddresses(),
+
   // Airports - Major
   "JFK International Airport, Queens, NY 11430",
   "LaGuardia Airport, Queens, NY 11371",
@@ -48,30 +70,11 @@ const commonAddresses = [
   "Radio City Music Hall, 1260 6th Ave, New York, NY 10020",
   "Carnegie Hall, 881 7th Avenue, New York, NY 10019",
 
-  // Shopping & Entertainment
-  "Fifth Avenue Shopping District, 5th Ave, New York, NY 10022",
-  "SoHo Shopping District, Manhattan, NY 10012",
-  "Broadway Theater District, Manhattan, NY 10036",
-  "Chelsea Market, 75 9th Ave, New York, NY 10011",
-
-  // Cultural Institutions
-  "Metropolitan Museum of Art, 1000 5th Ave, New York, NY 10028",
-  "Museum of Modern Art, 11 W 53rd St, New York, NY 10019",
-  "Lincoln Center, 10 Lincoln Center Plaza, New York, NY 10023",
-  "American Museum of Natural History, Central Park West, NY 10024",
-
   // Transportation Hubs
   "Grand Central Terminal, 89 E 42nd St, New York, NY 10017",
   "Penn Station, 234 W 31st St, New York, NY 10001",
   "Port Authority Bus Terminal, 625 8th Ave, New York, NY 10018",
   "World Trade Center Transportation Hub, New York, NY 10007",
-
-  // Popular Tourist Areas
-  "Central Park, Manhattan, NY 10022",
-  "Brooklyn Bridge, Brooklyn Bridge, New York, NY 10038",
-  "High Line Park, Manhattan, NY 10011",
-  "Battery Park, New York, NY 10004",
-  "Statue of Liberty Ferry Terminal, New York, NY 10004"
 ];
 
 interface AddressAutocompleteProps {
@@ -89,11 +92,27 @@ export function AddressAutocomplete({
   const [searchValue, setSearchValue] = React.useState("");
 
   const filteredAddresses = React.useMemo(() => {
-    if (!searchValue) return commonAddresses;
+    if (!searchValue) return commonAddresses.slice(0, 10); // Show first 10 suggestions when empty
     
-    return commonAddresses.filter((address) =>
-      address.toLowerCase().includes(searchValue.toLowerCase())
-    );
+    const searchLower = searchValue.toLowerCase();
+    const searchTerms = searchLower.split(/[\s,]+/); // Split on spaces and commas
+    
+    // Custom address detection (e.g., "1234 Main St")
+    const isCustomAddress = /^\d+\s+\w+/.test(searchValue);
+    
+    if (isCustomAddress) {
+      // Generate a custom address suggestion based on input
+      const customAddress = `${searchValue}, New York, NY`;
+      return [customAddress, ...commonAddresses.filter((address) =>
+        searchTerms.every(term => address.toLowerCase().includes(term))
+      )].slice(0, 10);
+    }
+
+    return commonAddresses
+      .filter((address) => 
+        searchTerms.every(term => address.toLowerCase().includes(term))
+      )
+      .slice(0, 10); // Limit to 10 results for better performance
   }, [searchValue]);
 
   const handleSelect = (currentValue: string) => {
