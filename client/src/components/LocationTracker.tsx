@@ -5,14 +5,17 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useUser } from '@/hooks/use-user';
 
 interface LocationTrackerProps {
   bookingId: number;
   isActive: boolean;
+  role?: 'passenger' | 'driver';
 }
 
-export default function LocationTracker({ bookingId, isActive }: LocationTrackerProps) {
-  const { updateLocation, connectionStatus, error } = useLocationTracking(bookingId);
+export default function LocationTracker({ bookingId, isActive, role = 'driver' }: LocationTrackerProps) {
+  const { updateLocation, connectionStatus, error, location } = useLocationTracking(bookingId);
+  const { user } = useUser();
   const [isTracking, setIsTracking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [trackingError, setTrackingError] = useState<string | null>(null);

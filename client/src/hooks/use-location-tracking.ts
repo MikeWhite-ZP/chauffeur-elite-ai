@@ -7,6 +7,7 @@ interface LocationUpdate {
   longitude: number;
   speed?: number;
   heading?: number;
+  estimatedArrivalTime?: string;
 }
 
 interface WebSocketMessage {

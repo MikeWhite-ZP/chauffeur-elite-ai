@@ -174,31 +174,33 @@ function setupBookingRoutes(app: Express) {
       const grandTotal = basePrice + gratuityFee + extraStopsFee + tolls + parking + creditCardFee - discount;
       const totalDue = grandTotal - paymentsDeposits;
       
-      const bookingData = {
+      const bookingData: typeof bookings.$inferInsert = {
         tripId: nanoid(10),
         userId: parseInt(req.body.userId),
-        accountId: req.body.accountId,
-        billingContact: req.body.billingContact,
-        companyName: req.body.companyName,
+        accountId: req.body.accountId || null,
+        billingContact: req.body.billingContact || null,
+        companyName: req.body.companyName || null,
         passengerFirstName: req.body.passengerFirstName,
         passengerLastName: req.body.passengerLastName,
         passengerPhone: req.body.passengerPhone,
         passengerEmail: req.body.passengerEmail,
-        poClientRef: req.body.poClientRef,
+        poClientRef: req.body.poClientRef || null,
         pickupDate: new Date(req.body.pickupDate),
         pickupTime: req.body.pickupTime,
         pickupLocation: req.body.pickupLocation,
         dropoffLocation: req.body.dropoffLocation,
-        airportCode: req.body.airportCode,
-        airportName: req.body.airportName,
-        airlineCode: req.body.airlineCode,
-        airlineName: req.body.airlineName,
-        flightNumber: req.body.flightNumber,
-        tripNotes: req.body.tripNotes,
-        jobStatus: 'unassigned',
+        airportCode: req.body.airportCode || null,
+        airportName: req.body.airportName || null,
+        airlineCode: req.body.airlineCode || null,
+        airlineName: req.body.airlineName || null,
+        flightNumber: req.body.flightNumber || null,
+        tripNotes: req.body.tripNotes || null,
+        jobStatus: "unassigned" as const,
         additionalRequests: req.body.additionalRequests || [],
         serviceType: req.body.serviceType,
-        vehicleType: req.body.vehicleType,
+        vehicleType: req.body.vehicleType || null,
+        chauffeurId: null,
+        vehicleId: null,
         basePrice: basePrice.toString(),
         gratuityFee: gratuityFee.toString(),
         extraStopsFee: extraStopsFee.toString(),
@@ -209,7 +211,13 @@ function setupBookingRoutes(app: Express) {
         grandTotal: grandTotal.toString(),
         paymentsDeposits: paymentsDeposits.toString(),
         totalDue: totalDue.toString(),
-        trackingEnabled: false
+        status: "pending" as const,
+        paymentStatus: "pending" as const,
+        trackingEnabled: false,
+        lastKnownLatitude: null,
+        lastKnownLongitude: null,
+        lastLocationUpdate: null,
+        estimatedArrivalTime: null
       };
       
       console.log('Attempting to create booking with data:', bookingData);
