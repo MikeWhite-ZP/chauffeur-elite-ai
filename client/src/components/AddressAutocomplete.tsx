@@ -20,61 +20,75 @@ const streetTypes = ["St", "Street", "Ave", "Avenue", "Rd", "Road", "Blvd", "Bou
 const commonStreets = ["Main", "Park", "Oak", "Maple", "Cedar", "Elm", "Pine", "Washington", "Madison", "Jefferson"];
 const directions = ["N", "North", "S", "South", "E", "East", "W", "West", "NE", "NW", "SE", "SW"];
 
-// Generate common street addresses
+// Houston-specific street names
+const houstonStreets = [
+  "Main", "Westheimer", "Richmond", "Kirby", "Post Oak", "Fannin", "San Felipe",
+  "Memorial", "Heights", "Washington", "Shepherd", "Durham", "Montrose", "Bellaire"
+];
+
+// Generate common street addresses in Houston
 const generateStreetAddresses = () => {
   const addresses: string[] = [];
-  // Generate addresses with different patterns
-  for (let i = 1; i <= 9999; i += 1000) {
-    for (const street of commonStreets) {
-      for (const type of streetTypes.slice(0, 4)) { // Use main street types
-        addresses.push(`${i} ${street} ${type}, New York, NY ${(10000 + i).toString().slice(1)}`);
+  // Houston zip codes for major areas
+  const zipCodes = [
+    77002, 77003, 77004, 77005, // Inner Loop
+    77006, 77007, 77008, 77019, // Heights/Montrose
+    77024, 77027, 77056, 77057, // Galleria/Memorial
+    77030, 77025, 77021, // Medical Center
+    77046, 77098, 77401  // West U/Bellaire
+  ];
+  
+  for (let i = 1000; i <= 9999; i += 2000) {
+    for (const street of houstonStreets) {
+      for (const type of streetTypes.slice(0, 4)) {
+        const zipCode = zipCodes[Math.floor(Math.random() * zipCodes.length)];
+        addresses.push(`${i} ${street} ${type}, Houston, TX ${zipCode}`);
       }
     }
   }
   return addresses;
 };
 
-// Common US addresses format for suggestions
+// Common Houston addresses for suggestions
 const commonAddresses = [
   // Generated Street Addresses
   ...generateStreetAddresses(),
 
-  // Airports - Major
-  "JFK International Airport, Queens, NY 11430",
-  "LaGuardia Airport, Queens, NY 11371",
-  "Newark Liberty International Airport, Newark, NJ 07114",
-  "Teterboro Airport, Teterboro, NJ 07608",
-  "Westchester County Airport, White Plains, NY 10604",
+  // Airports
+  "George Bush Intercontinental Airport, 2800 N Terminal Rd, Houston, TX 77032",
+  "William P. Hobby Airport, 7800 Airport Blvd, Houston, TX 77061",
+  "Sugar Land Regional Airport, 12888 TX-6, Sugar Land, TX 77498",
+  "Ellington Airport, 510 Ellington Field, Houston, TX 77034",
 
   // Hotels - Luxury
-  "The Plaza Hotel, 768 5th Ave, New York, NY 10019",
-  "Waldorf Astoria, 301 Park Ave, New York, NY 10022",
-  "The Ritz-Carlton, 50 Central Park South, New York, NY 10019",
-  "Four Seasons Hotel, 57 E 57th St, New York, NY 10022",
-  "The Peninsula New York, 700 5th Ave, New York, NY 10019",
-  "Mandarin Oriental, 80 Columbus Circle, New York, NY 10023",
+  "Four Seasons Hotel Houston, 1300 Lamar St, Houston, TX 77010",
+  "The Post Oak Hotel, 1600 West Loop South, Houston, TX 77027",
+  "The St. Regis Houston, 1919 Briar Oaks Ln, Houston, TX 77027",
+  "Hotel ZaZa Houston Museum District, 5701 Main St, Houston, TX 77005",
+  "Marriott Marquis Houston, 1777 Walker St, Houston, TX 77010",
+  "The Houstonian Hotel, 111 N Post Oak Ln, Houston, TX 77024",
 
   // Business Districts
-  "World Trade Center, Manhattan, NY 10007",
-  "Empire State Building, 350 5th Ave, New York, NY 10118",
-  "Rockefeller Center, 45 Rockefeller Plaza, New York, NY 10111",
-  "Hudson Yards, 20 Hudson Yards, New York, NY 10001",
-  "Times Square, Manhattan, NY 10036",
-  "Wall Street, Manhattan, NY 10005",
-  "MetroTech Center, Brooklyn, NY 11201",
+  "Downtown Houston, Houston, TX 77002",
+  "Houston Galleria, 5085 Westheimer Rd, Houston, TX 77056",
+  "Greenway Plaza, Houston, TX 77046",
+  "Energy Corridor, Houston, TX 77079",
+  "Texas Medical Center, Houston, TX 77030",
+  "Uptown Houston, Houston, TX 77056",
 
   // Convention & Event Spaces
-  "Javits Center, 429 11th Ave, New York, NY 10001",
-  "Madison Square Garden, 4 Pennsylvania Plaza, New York, NY 10001",
-  "Barclays Center, 620 Atlantic Ave, Brooklyn, NY 11217",
-  "Radio City Music Hall, 1260 6th Ave, New York, NY 10020",
-  "Carnegie Hall, 881 7th Avenue, New York, NY 10019",
+  "George R. Brown Convention Center, 1001 Avenida De Las Americas, Houston, TX 77010",
+  "NRG Park, 1 NRG Pkwy, Houston, TX 77054",
+  "Toyota Center, 1510 Polk St, Houston, TX 77002",
+  "Minute Maid Park, 501 Crawford St, Houston, TX 77002",
+  "Smart Financial Centre, 18111 Lexington Blvd, Sugar Land, TX 77479",
 
-  // Transportation Hubs
-  "Grand Central Terminal, 89 E 42nd St, New York, NY 10017",
-  "Penn Station, 234 W 31st St, New York, NY 10001",
-  "Port Authority Bus Terminal, 625 8th Ave, New York, NY 10018",
-  "World Trade Center Transportation Hub, New York, NY 10007",
+  // Transportation & Shopping
+  "Houston Metro Transit Center, 1900 Main St, Houston, TX 77002",
+  "Memorial City Mall, 303 Memorial City Way, Houston, TX 77024",
+  "The Galleria, 5085 Westheimer Rd, Houston, TX 77056",
+  "CityCentre, 800 Town and Country Blvd, Houston, TX 77024",
+  "River Oaks District, 4444 Westheimer Rd, Houston, TX 77027"
 ];
 
 interface AddressAutocompleteProps {
@@ -92,27 +106,54 @@ export function AddressAutocomplete({
   const [searchValue, setSearchValue] = React.useState("");
 
   const filteredAddresses = React.useMemo(() => {
-    if (!searchValue) return commonAddresses.slice(0, 10); // Show first 10 suggestions when empty
+    if (!searchValue) return commonAddresses.slice(0, 10);
     
     const searchLower = searchValue.toLowerCase();
-    const searchTerms = searchLower.split(/[\s,]+/); // Split on spaces and commas
+    const searchTerms = searchLower.split(/[\s,]+/);
     
-    // Custom address detection (e.g., "1234 Main St")
-    const isCustomAddress = /^\d+\s+\w+/.test(searchValue);
+    // Custom address patterns
+    const isStreetNumber = /^\d+$/.test(searchValue); // Just numbers
+    const isCustomAddress = /^\d+\s+\w+/.test(searchValue); // Number + Street
+    const isPartialStreet = houstonStreets.some(street => 
+      searchLower.includes(street.toLowerCase())
+    );
+    
+    let suggestions: string[] = [];
     
     if (isCustomAddress) {
-      // Generate a custom address suggestion based on input
-      const customAddress = `${searchValue}, New York, NY`;
-      return [customAddress, ...commonAddresses.filter((address) =>
-        searchTerms.every(term => address.toLowerCase().includes(term))
-      )].slice(0, 10);
+      // If it's a full custom address, add it as first suggestion
+      const nearestZip = "77002"; // Downtown Houston zip
+      suggestions.push(`${searchValue}, Houston, TX ${nearestZip}`);
     }
-
-    return commonAddresses
-      .filter((address) => 
+    
+    // Add matching predefined addresses
+    suggestions = [
+      ...suggestions,
+      ...commonAddresses.filter((address) => 
         searchTerms.every(term => address.toLowerCase().includes(term))
       )
-      .slice(0, 10); // Limit to 10 results for better performance
+    ];
+    
+    // For partial matches, add common completions
+    if (isStreetNumber) {
+      const num = searchValue;
+      suggestions.push(
+        ...houstonStreets.slice(0, 3).map(street => 
+          `${num} ${street} St, Houston, TX 77002`
+        )
+      );
+    }
+    
+    // If no matches found but contains a Houston street name
+    if (suggestions.length === 0 && isPartialStreet) {
+      suggestions.push(`${searchValue}, Houston, TX`);
+    }
+    
+    return suggestions
+      .filter((address, index, self) => 
+        self.indexOf(address) === index // Remove duplicates
+      )
+      .slice(0, 10);
   }, [searchValue]);
 
   const handleSelect = (currentValue: string) => {
