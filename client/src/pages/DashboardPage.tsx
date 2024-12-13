@@ -42,12 +42,12 @@ export default function DashboardPage() {
                     <p>{booking.serviceType}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Fare</p>
-                    <p>${Number(booking.totalFare).toFixed(2)}</p>
+                    <p className="text-sm text-gray-500">Total Due</p>
+                    <p>${Number(booking.totalDue).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Status</p>
-                    <p className="capitalize">{booking.status}</p>
+                    <p className="capitalize">{booking.jobStatus}</p>
                   </div>
                 </div>
               </CardContent>

@@ -58,9 +58,13 @@ export default function BookingFormMap({
   useEffect(() => {
     const geocodeAddress = async (address: string) => {
       try {
+        // Using OpenStreetMap's Nominatim service for geocoding
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
         );
+        if (!response.ok) {
+          throw new Error('Failed to fetch location data');
+        }
         const data = await response.json();
         if (data && data[0]) {
           return {
@@ -68,7 +72,8 @@ export default function BookingFormMap({
             lng: parseFloat(data[0].lon)
           };
         }
-        throw new Error(`Could not find location: ${address}`);
+        console.warn(`No location found for address: ${address}`);
+        return null;
       } catch (error) {
         console.error('Geocoding error:', error);
         return null;

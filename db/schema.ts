@@ -135,6 +135,7 @@ export const bookings = pgTable("bookings", {
   passengerLastName: text("passenger_last_name").notNull(),
   passengerPhone: text("passenger_phone").notNull(),
   passengerEmail: text("passenger_email").notNull(),
+  passengerCount: integer("passenger_count").default(1),
   poClientRef: text("po_client_ref"), // PO/Client Reference Number
   
   // Pickup and Dropoff Details
@@ -142,6 +143,7 @@ export const bookings = pgTable("bookings", {
   pickupTime: text("pickup_time").notNull(),
   pickupLocation: text("pickup_location").notNull(),
   dropoffLocation: text("dropoff_location").notNull(),
+  duration: integer("duration"), // Duration in hours for hourly bookings
   
   // Airport Information
   airportCode: text("airport_code"),
@@ -152,10 +154,16 @@ export const bookings = pgTable("bookings", {
   
   // Trip Details
   tripNotes: text("trip_notes"),
+  status: text("status", {
+    enum: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled']
+  }).default('pending'),
   jobStatus: text("job_status", { 
     enum: ['unassigned', 'assigned', 'dispatched', 'on_the_way', 'arrived', 
            'passenger_on_board', 'passenger_dropped_off', 'done'] 
   }).default('unassigned'),
+  paymentStatus: text("payment_status", {
+    enum: ['pending', 'paid', 'refunded', 'failed']
+  }).default('pending'),
   additionalRequests: json("additional_requests").default([]), // Array of requests like child seat, booster, etc.
   
   // Service and Vehicle Details

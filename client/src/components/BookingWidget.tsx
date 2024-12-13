@@ -116,12 +116,17 @@ export default function BookingWidget() {
       pickupLocation: data.from,
       dropoffLocation: data.to,
       pickupDate: pickupDateTime,
+      passengerFirstName: "John", // TODO: Get from form
+      passengerLastName: "Doe", // TODO: Get from form
+      passengerPhone: "1234567890", // TODO: Get from form
+      passengerEmail: "john@example.com", // TODO: Get from form
       passengerCount: 1,
       basePrice: "100.00",
-      totalFare: "100.00",
+      grandTotal: "100.00",
+      totalDue: "100.00",
       status: "pending",
       paymentStatus: "pending",
-      stops: stops.length > 0 ? stops.join(',') : null,
+      additionalRequests: stops.length > 0 ? stops : [],
       trackingEnabled: true
     };
 
