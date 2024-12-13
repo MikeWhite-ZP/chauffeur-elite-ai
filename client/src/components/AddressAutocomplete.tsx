@@ -20,75 +20,104 @@ const streetTypes = ["St", "Street", "Ave", "Avenue", "Rd", "Road", "Blvd", "Bou
 const commonStreets = ["Main", "Park", "Oak", "Maple", "Cedar", "Elm", "Pine", "Washington", "Madison", "Jefferson"];
 const directions = ["N", "North", "S", "South", "E", "East", "W", "West", "NE", "NW", "SE", "SW"];
 
-// Houston-specific street names
-const houstonStreets = [
-  "Main", "Westheimer", "Richmond", "Kirby", "Post Oak", "Fannin", "San Felipe",
-  "Memorial", "Heights", "Washington", "Shepherd", "Durham", "Montrose", "Bellaire"
+// Texas cities with their common streets and zip codes
+const texasCities = [
+  {
+    city: "Houston",
+    streets: ["Main", "Westheimer", "Richmond", "Kirby", "Post Oak", "Fannin", "San Felipe", "Memorial"],
+    zipCodes: [77002, 77027, 77056, 77024, 77030] // Major areas
+  },
+  {
+    city: "Dallas",
+    streets: ["Main", "Commerce", "McKinney", "Ross", "Live Oak", "Preston", "Oak Lawn", "Mockingbird"],
+    zipCodes: [75201, 75202, 75204, 75205, 75219] // Downtown and Uptown
+  },
+  {
+    city: "Austin",
+    streets: ["Congress", "Lamar", "Guadalupe", "Cesar Chavez", "6th", "5th", "MLK", "Riverside"],
+    zipCodes: [78701, 78703, 78704, 78705, 78731] // Central Austin
+  },
+  {
+    city: "San Antonio",
+    streets: ["Broadway", "Commerce", "Market", "Houston", "Alamo", "River Walk", "St Mary's", "McCullough"],
+    zipCodes: [78205, 78215, 78204, 78212, 78216] // Downtown and Alamo Heights
+  },
+  {
+    city: "Fort Worth",
+    streets: ["Main", "Houston", "Commerce", "Sundance Square", "University", "Camp Bowie", "7th", "Magnolia"],
+    zipCodes: [76102, 76104, 76107, 76109, 76110] // Downtown and Near Southside
+  }
 ];
 
-// Generate common street addresses in Houston
+// Generate common street addresses across Texas
 const generateStreetAddresses = () => {
   const addresses: string[] = [];
-  // Houston zip codes for major areas
-  const zipCodes = [
-    77002, 77003, 77004, 77005, // Inner Loop
-    77006, 77007, 77008, 77019, // Heights/Montrose
-    77024, 77027, 77056, 77057, // Galleria/Memorial
-    77030, 77025, 77021, // Medical Center
-    77046, 77098, 77401  // West U/Bellaire
-  ];
   
-  for (let i = 1000; i <= 9999; i += 2000) {
-    for (const street of houstonStreets) {
-      for (const type of streetTypes.slice(0, 4)) {
-        const zipCode = zipCodes[Math.floor(Math.random() * zipCodes.length)];
-        addresses.push(`${i} ${street} ${type}, Houston, TX ${zipCode}`);
+  for (const cityData of texasCities) {
+    for (let i = 1000; i <= 9999; i += 2000) {
+      for (const street of cityData.streets.slice(0, 4)) {
+        for (const type of streetTypes.slice(0, 2)) {
+          const zipCode = cityData.zipCodes[Math.floor(Math.random() * cityData.zipCodes.length)];
+          addresses.push(`${i} ${street} ${type}, ${cityData.city}, TX ${zipCode}`);
+        }
       }
     }
   }
   return addresses;
 };
 
-// Common Houston addresses for suggestions
+// Major Texas locations for suggestions
 const commonAddresses = [
   // Generated Street Addresses
   ...generateStreetAddresses(),
 
-  // Airports
+  // Major Airports
+  "Dallas/Fort Worth International Airport, 2400 Aviation Dr, DFW Airport, TX 75261",
   "George Bush Intercontinental Airport, 2800 N Terminal Rd, Houston, TX 77032",
+  "Austin-Bergstrom International Airport, 3600 Presidential Blvd, Austin, TX 78719",
+  "San Antonio International Airport, 9800 Airport Blvd, San Antonio, TX 78216",
   "William P. Hobby Airport, 7800 Airport Blvd, Houston, TX 77061",
-  "Sugar Land Regional Airport, 12888 TX-6, Sugar Land, TX 77498",
-  "Ellington Airport, 510 Ellington Field, Houston, TX 77034",
+  "Dallas Love Field, 8008 Herb Kelleher Way, Dallas, TX 75235",
+
+  // Convention Centers & Event Venues
+  "Kay Bailey Hutchison Convention Center, 650 S Griffin St, Dallas, TX 75202",
+  "George R. Brown Convention Center, 1001 Avenida De Las Americas, Houston, TX 77010",
+  "Austin Convention Center, 500 E Cesar Chavez St, Austin, TX 78701",
+  "Henry B. González Convention Center, 900 E Market St, San Antonio, TX 78205",
+  "AT&T Stadium, 1 AT&T Way, Arlington, TX 76011",
+  "NRG Stadium, 1 NRG Pkwy, Houston, TX 77054",
+  "Alamodome, 100 Montana St, San Antonio, TX 78203",
 
   // Hotels - Luxury
+  "The Ritz-Carlton Dallas, 2121 McKinney Ave, Dallas, TX 75201",
   "Four Seasons Hotel Houston, 1300 Lamar St, Houston, TX 77010",
-  "The Post Oak Hotel, 1600 West Loop South, Houston, TX 77027",
-  "The St. Regis Houston, 1919 Briar Oaks Ln, Houston, TX 77027",
-  "Hotel ZaZa Houston Museum District, 5701 Main St, Houston, TX 77005",
-  "Marriott Marquis Houston, 1777 Walker St, Houston, TX 77010",
-  "The Houstonian Hotel, 111 N Post Oak Ln, Houston, TX 77024",
+  "Four Seasons Hotel Austin, 98 San Jacinto Blvd, Austin, TX 78701",
+  "The St. Anthony Hotel, 300 E Travis St, San Antonio, TX 78205",
+  "Omni Fort Worth Hotel, 1300 Houston St, Fort Worth, TX 76102",
 
-  // Business Districts
+  // Business & Shopping Districts
+  "Downtown Dallas, Dallas, TX 75201",
+  "Uptown Dallas, Dallas, TX 75201",
   "Downtown Houston, Houston, TX 77002",
-  "Houston Galleria, 5085 Westheimer Rd, Houston, TX 77056",
-  "Greenway Plaza, Houston, TX 77046",
-  "Energy Corridor, Houston, TX 77079",
-  "Texas Medical Center, Houston, TX 77030",
-  "Uptown Houston, Houston, TX 77056",
-
-  // Convention & Event Spaces
-  "George R. Brown Convention Center, 1001 Avenida De Las Americas, Houston, TX 77010",
-  "NRG Park, 1 NRG Pkwy, Houston, TX 77054",
-  "Toyota Center, 1510 Polk St, Houston, TX 77002",
-  "Minute Maid Park, 501 Crawford St, Houston, TX 77002",
-  "Smart Financial Centre, 18111 Lexington Blvd, Sugar Land, TX 77479",
-
-  // Transportation & Shopping
-  "Houston Metro Transit Center, 1900 Main St, Houston, TX 77002",
-  "Memorial City Mall, 303 Memorial City Way, Houston, TX 77024",
+  "The Domain, 11410 Century Oaks Terrace, Austin, TX 78758",
+  "The Pearl District, 303 Pearl Pkwy, San Antonio, TX 78215",
+  "Sundance Square, 420 Main St, Fort Worth, TX 76102",
   "The Galleria, 5085 Westheimer Rd, Houston, TX 77056",
-  "CityCentre, 800 Town and Country Blvd, Houston, TX 77024",
-  "River Oaks District, 4444 Westheimer Rd, Houston, TX 77027"
+  "NorthPark Center, 8687 N Central Expy, Dallas, TX 75225",
+
+  // Tourist Attractions
+  "The Alamo, 300 Alamo Plaza, San Antonio, TX 78205",
+  "Space Center Houston, 1601 NASA Pkwy, Houston, TX 77058",
+  "Texas State Capitol, 1100 Congress Ave, Austin, TX 78701",
+  "River Walk, 849 E Commerce St, San Antonio, TX 78205",
+  "Fort Worth Stockyards, 2501 Rodeo Plaza, Fort Worth, TX 76164",
+  "San Antonio SeaWorld, 10500 Sea World Dr, San Antonio, TX 78251",
+  
+  // Medical Centers
+  "Texas Medical Center, Houston, TX 77030",
+  "UT Southwestern Medical Center, 5323 Harry Hines Blvd, Dallas, TX 75390",
+  "Dell Seton Medical Center, 1500 Red River St, Austin, TX 78701",
+  "Methodist Hospital, 7700 Floyd Curl Dr, San Antonio, TX 78229"
 ];
 
 interface AddressAutocompleteProps {
@@ -114,16 +143,19 @@ export function AddressAutocomplete({
     // Custom address patterns
     const isStreetNumber = /^\d+$/.test(searchValue); // Just numbers
     const isCustomAddress = /^\d+\s+\w+/.test(searchValue); // Number + Street
-    const isPartialStreet = houstonStreets.some(street => 
-      searchLower.includes(street.toLowerCase())
+    const isPartialStreet = texasCities.some(cityData => 
+      cityData.streets.some(street => searchLower.includes(street.toLowerCase()))
     );
     
     let suggestions: string[] = [];
     
     if (isCustomAddress) {
-      // If it's a full custom address, add it as first suggestion
-      const nearestZip = "77002"; // Downtown Houston zip
-      suggestions.push(`${searchValue}, Houston, TX ${nearestZip}`);
+      // If it's a full custom address, add suggestions for major Texas cities
+      suggestions.push(
+        ...texasCities.slice(0, 3).map(cityData => 
+          `${searchValue}, ${cityData.city}, TX ${cityData.zipCodes[0]}`
+        )
+      );
     }
     
     // Add matching predefined addresses
