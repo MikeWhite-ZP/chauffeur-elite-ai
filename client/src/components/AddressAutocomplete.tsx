@@ -97,12 +97,18 @@ export function AddressAutocomplete({
       const baseUrl = 'https://api.tomtom.com/search/2/search';
       // Get API key from environment
       const apiKey = import.meta.env.VITE_TOMTOM_API_KEY;
+      console.log('Debug - Environment variables:', {
+        hasApiKey: !!apiKey,
+        apiKeyLength: apiKey?.length,
+        allEnvVars: import.meta.env
+      });
+      
       if (!apiKey) {
-        console.error('TomTom API key is missing! Please check your environment variables.');
-        setError('Configuration error. Please contact support.');
+        const errorMsg = 'TomTom API key is missing! Please check your environment variables.';
+        console.error(errorMsg);
+        setError(errorMsg);
         return;
       }
-      console.log('TomTom API key status:', apiKey ? 'Present' : 'Missing');
       
       const params = new URLSearchParams({
         key: apiKey,
