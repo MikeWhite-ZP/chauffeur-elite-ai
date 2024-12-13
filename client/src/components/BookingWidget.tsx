@@ -25,6 +25,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
+import React from "react";
 
 
 const timeSchema = z.object({
@@ -48,13 +49,20 @@ const hourlySchema = z.object({
   time: timeSchema,
 });
 
+interface LocationData {
+  address: string;
+  position: { lat: number; lon: number } | null;
+}
+
 export default function BookingWidget() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [stops, setStops] = useState<string[]>([]);
   const [showStopInput, setShowStopInput] = useState(false);
+  const [pickupCoords, setPickupCoords] = React.useState<{ lat: number; lon: number } | undefined>();
+  const [dropoffCoords, setDropoffCoords] = React.useState<{ lat: number; lon: number } | undefined>();
 
-  const destinationForm = useForm<z.infer<typeof destinationSchema>>({
+  const destinationForm = useForm<z.infer<typeof destinationSchema> & { fromLocation: LocationData; toLocation: LocationData; } >({
     resolver: zodResolver(destinationSchema),
     defaultValues: {
       from: "",
@@ -62,16 +70,19 @@ export default function BookingWidget() {
       date: "",
       time: { hour: "", minute: "", period: "" },
       stop: "",
+      fromLocation: { address: "", position: null },
+      toLocation: { address: "", position: null },
     },
   });
 
-  const hourlyForm = useForm<z.infer<typeof hourlySchema>>({
+  const hourlyForm = useForm<z.infer<typeof hourlySchema> & { fromLocation: LocationData; } >({
     resolver: zodResolver(hourlySchema),
     defaultValues: {
       from: "",
       duration: "",
       date: "",
       time: { hour: "", minute: "", period: "" },
+      fromLocation: { address: "", position: null },
     },
   });
 
@@ -111,7 +122,7 @@ export default function BookingWidget() {
     }
   };
 
-  const onDestinationSubmit = async (data: z.infer<typeof destinationSchema>) => {
+  const onDestinationSubmit = async (data: z.infer<typeof destinationSchema> & { fromLocation: LocationData; toLocation: LocationData; }) => {
     const pickupDateTime = new Date(`${data.date} ${data.time.hour}:${data.time.minute} ${data.time.period}`);
     const bookingData: Partial<InsertBooking> = {
       serviceType: "destination",
@@ -129,13 +140,18 @@ export default function BookingWidget() {
       status: "pending",
       paymentStatus: "pending",
       additionalRequests: stops.length > 0 ? stops : [],
-      trackingEnabled: true
+      trackingEnabled: true,
+      pickupLatitude: data.fromLocation.position?.lat.toString(),
+      pickupLongitude: data.fromLocation.position?.lon.toString(),
+      dropoffLatitude: data.toLocation.position?.lat.toString(),
+      dropoffLongitude: data.toLocation.position?.lon.toString(),
+
     };
 
     createBooking(bookingData);
   };
 
-  const onHourlySubmit = async (data: z.infer<typeof hourlySchema>) => {
+  const onHourlySubmit = async (data: z.infer<typeof hourlySchema> & { fromLocation: LocationData; }) => {
     const pickupDateTime = new Date(`${data.date} ${data.time.hour}:${data.time.minute} ${data.time.period}`);
     const bookingData: Partial<InsertBooking> = {
       serviceType: "hourly",
@@ -155,7 +171,9 @@ export default function BookingWidget() {
       status: "pending",
       paymentStatus: "pending",
       additionalRequests: [],
-      trackingEnabled: true
+      trackingEnabled: true,
+      pickupLatitude: data.fromLocation.position?.lat.toString(),
+      pickupLongitude: data.fromLocation.position?.lon.toString(),
     };
 
     createBooking(bookingData);
@@ -181,8 +199,13 @@ export default function BookingWidget() {
                     <FormControl>
                       <AddressAutocomplete
                         value={field.value}
-                        onChange={field.onChange}
+                        onChange={(value, position) => {
+                          field.onChange(value);
+                          destinationForm.setValue('fromLocation', {address: value, position});
+                          setPickupCoords(position);
+                        }}
                         placeholder="Enter pickup address"
+                        useGeolocation={true}
                       />
                     </FormControl>
                     <FormMessage />
@@ -212,9 +235,9 @@ export default function BookingWidget() {
                             {...field}
                           />
                         </FormControl>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
+                        <Button
+                          type="button"
+                          variant="outline"
                           onClick={() => field.value && handleAddStop(field.value)}
                         >
                           Add
@@ -247,8 +270,13 @@ export default function BookingWidget() {
                     <FormControl>
                       <AddressAutocomplete
                         value={field.value}
-                        onChange={field.onChange}
+                        onChange={(value, position) => {
+                          field.onChange(value);
+                          destinationForm.setValue('toLocation', {address: value, position});
+                          setDropoffCoords(position);
+                        }}
                         placeholder="Enter dropoff address"
+                        useGeolocation={true}
                       />
                     </FormControl>
                     <FormMessage />
@@ -358,8 +386,13 @@ export default function BookingWidget() {
                     <FormControl>
                       <AddressAutocomplete
                         value={field.value}
-                        onChange={field.onChange}
+                        onChange={(value, position) => {
+                          field.onChange(value);
+                          hourlyForm.setValue('fromLocation', {address: value, position});
+                          setPickupCoords(position);
+                        }}
                         placeholder="Enter pickup address"
+                        useGeolocation={true}
                       />
                     </FormControl>
                     <FormMessage />

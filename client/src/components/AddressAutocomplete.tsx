@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,40 +15,76 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-interface AddressAutocompleteProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
+interface TomTomAddress {
+  streetNumber?: string;
+  streetName?: string;
+  municipality: string;
+  countrySubdivision: string;
+  postalCode?: string;
+  country: string;
+  freeformAddress: string;
 }
 
-interface Location {
-  display_name: string;
-  place_id: number;
-  address?: {
-    road?: string;
-    house_number?: string;
-    city?: string;
-    state?: string;
-    postcode?: string;
+interface TomTomResult {
+  type: string;
+  id: string;
+  score: number;
+  address: TomTomAddress;
+  position: {
+    lat: number;
+    lon: number;
   };
-  lat?: string;
-  lon?: string;
+}
+
+interface TomTomResponse {
+  summary: {
+    totalResults: number;
+    offset: number;
+    fuzzyLevel: number;
+  };
+  results: TomTomResult[];
+}
+
+interface AddressAutocompleteProps {
+  value: string;
+  onChange: (value: string, position?: { lat: number; lon: number }) => void;
+  placeholder?: string;
+  useGeolocation?: boolean;
 }
 
 export function AddressAutocomplete({
   value,
   onChange,
-  placeholder = "Search for address..."
+  placeholder = "Search for address...",
+  useGeolocation = false
 }: AddressAutocompleteProps) {
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
-  const [locations, setLocations] = React.useState<Location[]>([]);
+  const [results, setResults] = React.useState<TomTomResult[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [userLocation, setUserLocation] = React.useState<{ lat: number; lon: number } | null>(null);
   const debounceTimer = React.useRef<NodeJS.Timeout>();
+
+  // Get user's location if geolocation is enabled
+  React.useEffect(() => {
+    if (useGeolocation && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+        }
+      );
+    }
+  }, [useGeolocation]);
 
   const searchLocations = React.useCallback(async (query: string) => {
     if (!query) {
-      setLocations([]);
+      setResults([]);
       return;
     }
 
@@ -56,30 +92,30 @@ export function AddressAutocomplete({
       setIsLoading(true);
       console.log('Searching for:', query);
       
-      // Append Texas only if not already mentioned
-      const searchQuery = query.toLowerCase().includes('texas') ? 
-        query : `${query}, Texas, USA`;
-      
-      const url = new URL('https://nominatim.openstreetmap.org/search');
-      url.search = new URLSearchParams({
-        q: searchQuery,
-        format: 'json',
-        countrycodes: 'us',
-        state: 'texas',
+      const baseUrl = 'https://api.tomtom.com/search/2/search';
+      const params = new URLSearchParams({
+        key: process.env.TOMTOM_API_KEY || '',
+        typeahead: 'true',
         limit: '10',
-        addressdetails: '1',
-      }).toString();
-      
-      console.log('Fetching from URL:', url.toString());
-      
-      const response = await fetch(url, {
-        headers: {
-          'Accept-Language': 'en-US,en',
-          'User-Agent': 'ChauffeurElite/1.0',
-          'Accept': 'application/json'
-        },
-        mode: 'cors'
+        countrySet: 'US',
+        entityTypeSet: 'Address,Street,POI',
+        language: 'en-US',
       });
+
+      // Add location bias if user location is available
+      if (userLocation) {
+        params.append('lat', userLocation.lat.toString());
+        params.append('lon', userLocation.lon.toString());
+      }
+
+      // Ensure Texas state filter
+      const searchQuery = query.toLowerCase().includes('texas') ? 
+        query : `${query}, Texas`;
+      
+      const url = `${baseUrl}/${encodeURIComponent(searchQuery)}.json?${params.toString()}`;
+      console.log('Fetching from URL:', url);
+      
+      const response = await fetch(url);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -87,24 +123,23 @@ export function AddressAutocomplete({
         throw new Error(`Failed to fetch locations: ${response.status} ${response.statusText}`);
       }
 
-      const data: Location[] = await response.json();
+      const data: TomTomResponse = await response.json();
       console.log('Received locations:', data);
       
-      // Filter results to ensure they're in Texas and have address details
-      const texasLocations = data.filter(loc => {
-        if (!loc.address) return false;
-        return loc.address.state?.toLowerCase().includes('texas');
-      });
+      // Filter results to ensure they're in Texas
+      const texasResults = data.results.filter(result => 
+        result.address.countrySubdivision.toLowerCase() === 'texas'
+      );
       
-      console.log('Filtered Texas locations:', texasLocations);
-      setLocations(texasLocations);
+      console.log('Filtered Texas locations:', texasResults);
+      setResults(texasResults);
     } catch (error) {
       console.error('Error fetching locations:', error);
-      setLocations([]);
+      setResults([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [userLocation]);
 
   React.useEffect(() => {
     if (debounceTimer.current) {
@@ -114,9 +149,9 @@ export function AddressAutocomplete({
     if (searchValue) {
       debounceTimer.current = setTimeout(() => {
         searchLocations(searchValue);
-      }, 500); // Debounce for 500ms
+      }, 300); // Reduced debounce time for better responsiveness
     } else {
-      setLocations([]);
+      setResults([]);
     }
 
     return () => {
@@ -126,8 +161,12 @@ export function AddressAutocomplete({
     };
   }, [searchValue, searchLocations]);
 
-  const handleSelect = (currentValue: string) => {
-    onChange(currentValue === value ? "" : currentValue);
+  const handleSelect = (result: TomTomResult) => {
+    const selectedAddress = result.address.freeformAddress;
+    onChange(
+      selectedAddress === value ? "" : selectedAddress,
+      result.position
+    );
     setOpen(false);
   };
 
@@ -141,8 +180,8 @@ export function AddressAutocomplete({
           className="w-full justify-between"
         >
           {value
-            ? value.length > 30
-              ? value.substring(0, 30) + "..."
+            ? value.length > 40
+              ? value.substring(0, 40) + "..."
               : value
             : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -151,7 +190,7 @@ export function AddressAutocomplete({
       <PopoverContent className="w-[400px] p-0">
         <Command shouldFilter={false}>
           <CommandInput 
-            placeholder={placeholder} 
+            placeholder={placeholder}
             value={searchValue}
             onValueChange={setSearchValue}
           />
@@ -159,43 +198,47 @@ export function AddressAutocomplete({
             <div className="flex items-center justify-center p-4">
               <Loader2 className="h-4 w-4 animate-spin" />
             </div>
-          ) : locations.length === 0 ? (
-            <CommandEmpty>No address found.</CommandEmpty>
+          ) : results.length === 0 ? (
+            <CommandEmpty>No address found in Texas.</CommandEmpty>
           ) : (
             <CommandGroup className="max-h-[300px] overflow-auto">
-              {locations.map((location) => {
-                // Format the address in a more readable way
-                const address = location.address;
-                let displayAddress = '';
+              {results.map((result) => {
+                const address = result.address;
+                const mainText = [
+                  address.streetNumber,
+                  address.streetName
+                ].filter(Boolean).join(' ');
                 
-                if (address) {
-                  const parts = [];
-                  if (address.house_number && address.road) {
-                    parts.push(`${address.house_number} ${address.road}`);
-                  } else if (address.road) {
-                    parts.push(address.road);
-                  }
-                  if (address.city) parts.push(address.city);
-                  if (address.state) parts.push(address.state);
-                  if (address.postcode) parts.push(address.postcode);
-                  displayAddress = parts.join(', ');
-                } else {
-                  displayAddress = location.display_name;
-                }
+                const secondaryText = [
+                  address.municipality,
+                  'Texas',
+                  address.postalCode
+                ].filter(Boolean).join(', ');
 
                 return (
                   <CommandItem
-                    key={location.place_id}
-                    value={displayAddress}
-                    onSelect={handleSelect}
+                    key={result.id}
+                    value={result.address.freeformAddress}
+                    onSelect={() => handleSelect(result)}
+                    className="flex flex-col items-start py-3"
                   >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === displayAddress ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {displayAddress}
+                    <div className="flex items-start gap-2 w-full">
+                      <MapPin className="h-4 w-4 shrink-0 mt-1" />
+                      <div className="flex-1 overflow-hidden">
+                        <div className="font-medium truncate">
+                          {mainText || address.freeformAddress}
+                        </div>
+                        <div className="text-sm text-muted-foreground truncate">
+                          {secondaryText}
+                        </div>
+                      </div>
+                      <Check
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          value === result.address.freeformAddress ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                    </div>
                   </CommandItem>
                 );
               })}
