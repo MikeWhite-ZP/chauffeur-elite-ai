@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Plus } from "lucide-react";
 import { type InsertBooking } from "@db/schema";
 import { Input } from "@/components/ui/input";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { Label } from "@/components/ui/label";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +25,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
+
 
 const timeSchema = z.object({
   hour: z.string().min(1, "Hour is required"),
@@ -177,10 +179,10 @@ export default function BookingWidget() {
                   <FormItem>
                     <Label>From</Label>
                     <FormControl>
-                      <Input
-                        type="text"
+                      <AddressAutocomplete
+                        value={field.value}
+                        onChange={field.onChange}
                         placeholder="Enter pickup address"
-                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -243,10 +245,10 @@ export default function BookingWidget() {
                   <FormItem>
                     <Label>To</Label>
                     <FormControl>
-                      <Input
-                        type="text"
+                      <AddressAutocomplete
+                        value={field.value}
+                        onChange={field.onChange}
                         placeholder="Enter dropoff address"
-                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -354,10 +356,10 @@ export default function BookingWidget() {
                   <FormItem>
                     <Label>Pickup Location</Label>
                     <FormControl>
-                      <Input
-                        type="text"
+                      <AddressAutocomplete
+                        value={field.value}
+                        onChange={field.onChange}
                         placeholder="Enter pickup address"
-                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
