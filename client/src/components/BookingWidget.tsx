@@ -59,8 +59,8 @@ export default function BookingWidget() {
   const queryClient = useQueryClient();
   const [stops, setStops] = useState<string[]>([]);
   const [showStopInput, setShowStopInput] = useState(false);
-  const [pickupCoords, setPickupCoords] = React.useState<{ lat: number; lon: number } | undefined>();
-  const [dropoffCoords, setDropoffCoords] = React.useState<{ lat: number; lon: number } | undefined>();
+  const [pickupCoords, setPickupCoords] = React.useState<{ lat: number; lon: number } | null>(null);
+  const [dropoffCoords, setDropoffCoords] = React.useState<{ lat: number; lon: number } | null>(null);
 
   const destinationForm = useForm<z.infer<typeof destinationSchema> & { fromLocation: LocationData; toLocation: LocationData; } >({
     resolver: zodResolver(destinationSchema),

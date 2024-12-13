@@ -9,6 +9,7 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Popover,
   PopoverContent,
@@ -62,6 +63,7 @@ export function AddressAutocomplete({
   const [searchValue, setSearchValue] = React.useState("");
   const [results, setResults] = React.useState<TomTomResult[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const [userLocation, setUserLocation] = React.useState<{ lat: number; lon: number } | null>(null);
   const debounceTimer = React.useRef<NodeJS.Timeout>();
 
@@ -93,8 +95,17 @@ export function AddressAutocomplete({
       console.log('Searching for:', query);
       
       const baseUrl = 'https://api.tomtom.com/search/2/search';
+      // Get API key from environment
+      const apiKey = import.meta.env.VITE_TOMTOM_API_KEY;
+      if (!apiKey) {
+        console.error('TomTom API key is missing! Please check your environment variables.');
+        setError('Configuration error. Please contact support.');
+        return;
+      }
+      console.log('TomTom API key status:', apiKey ? 'Present' : 'Missing');
+      
       const params = new URLSearchParams({
-        key: process.env.TOMTOM_API_KEY || '',
+        key: apiKey,
         typeahead: 'true',
         limit: '10',
         countrySet: 'US',
@@ -106,6 +117,7 @@ export function AddressAutocomplete({
       if (userLocation) {
         params.append('lat', userLocation.lat.toString());
         params.append('lon', userLocation.lon.toString());
+        console.log('Added location bias:', userLocation);
       }
 
       // Ensure Texas state filter
@@ -113,7 +125,7 @@ export function AddressAutocomplete({
         query : `${query}, Texas`;
       
       const url = `${baseUrl}/${encodeURIComponent(searchQuery)}.json?${params.toString()}`;
-      console.log('Fetching from URL:', url);
+      console.log('TomTom API request URL:', url);
       
       const response = await fetch(url);
 
@@ -134,8 +146,13 @@ export function AddressAutocomplete({
       console.log('Filtered Texas locations:', texasResults);
       setResults(texasResults);
     } catch (error) {
-      console.error('Error fetching locations:', error);
+      console.error('TomTom API Error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch addresses';
+      console.error('Detailed error:', errorMessage);
       setResults([]);
+      
+      // Show a user-friendly error message in the dropdown
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -198,6 +215,12 @@ export function AddressAutocomplete({
             <div className="flex items-center justify-center p-4">
               <Loader2 className="h-4 w-4 animate-spin" />
             </div>
+          ) : error ? (
+            <CommandEmpty>
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </CommandEmpty>
           ) : results.length === 0 ? (
             <CommandEmpty>No address found in Texas.</CommandEmpty>
           ) : (
