@@ -103,7 +103,7 @@ export default function LiveTracking() {
                             <Badge 
                               variant={
                                 booking.status === 'in_progress' ? 'default' :
-                                booking.status === 'completed' ? 'success' :
+                                booking.status === 'completed' ? 'default' :
                                 booking.status === 'cancelled' ? 'destructive' :
                                 'secondary'
                               }

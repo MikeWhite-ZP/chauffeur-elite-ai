@@ -4,6 +4,16 @@ import { locationTracking, bookings, type User } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { Server } from "http";
 
+// Store admin WebSocket connections
+export const adminConnections = new Set<WS>();
+
+export function addAdminConnection(ws: WS) {
+  adminConnections.add(ws);
+  ws.on('close', () => {
+    adminConnections.delete(ws);
+  });
+}
+
 // Custom type for WebSocket server errors
 interface WebSocketError extends Error {
   code?: string;

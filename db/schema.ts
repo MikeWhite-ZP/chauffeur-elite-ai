@@ -276,3 +276,22 @@ export const insertLocationTrackingSchema = createInsertSchema(locationTracking)
 export const selectLocationTrackingSchema = createSelectSchema(locationTracking);
 export type InsertLocationTracking = z.infer<typeof insertLocationTrackingSchema>;
 export type LocationTracking = z.infer<typeof selectLocationTrackingSchema>;
+
+// Emergency Incidents Table
+export const emergencyIncidents = pgTable("emergency_incidents", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  chauffeurId: integer("chauffeur_id").references(() => chauffeurs.id),
+  bookingId: integer("booking_id").references(() => bookings.id),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  status: text("status", { enum: ['active', 'resolved', 'false_alarm'] }).notNull().default('active'),
+  description: text("description"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertEmergencyIncidentSchema = createInsertSchema(emergencyIncidents);
+export const selectEmergencyIncidentSchema = createSelectSchema(emergencyIncidents);
+export type InsertEmergencyIncident = z.infer<typeof insertEmergencyIncidentSchema>;
+export type EmergencyIncident = z.infer<typeof selectEmergencyIncidentSchema>;

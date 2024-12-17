@@ -16,7 +16,7 @@ import { useLocation } from "wouter";
 import type { Booking } from "@db/schema";
 
 // Additional fields needed for the UI
-interface BookingWithDetails extends Omit<Booking, 'id'> {
+interface BookingWithDetails extends Omit<Booking, 'id' | 'jobStatus'> {
   id: number;
   tripId: string;
   pickupLocation: string;
@@ -26,7 +26,7 @@ interface BookingWithDetails extends Omit<Booking, 'id'> {
   passengerFirstName: string;
   passengerLastName: string;
   driverName?: string;
-  jobStatus: string;
+  jobStatus: 'unassigned' | 'assigned' | 'dispatched' | 'on_the_way' | 'arrived' | 'passenger_on_board' | 'passenger_dropped_off' | 'done' | null;
   grandTotal: string;
   totalDue: string;
 }
