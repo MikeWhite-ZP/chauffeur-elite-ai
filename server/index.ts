@@ -65,20 +65,39 @@ app.use((req, res, next) => {
 (async () => {
   // Setup authentication
   try {
+    // Initialize database connection
+    console.log('Initializing database connection...');
+    const { testDatabaseConnection } = await import('./db');
+
+    // Test database connection with retries
+    let connected = false;
+    for (let i = 0; i < 3 && !connected; i++) {
+      console.log(`Attempting database connection (attempt ${i + 1}/3)...`);
+      connected = await testDatabaseConnection();
+      if (!connected && i < 2) {
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before retry
+      }
+    }
+
+    if (!connected) {
+      throw new Error('Failed to connect to database after 3 attempts');
+    }
+
+    // Start server initialization
     console.log('Starting server initialization...');
-    
+
     // Setup authentication
     console.log('Setting up authentication...');
     setupAuth(app);
     console.log('Authentication setup completed');
-    
+
     // Register API routes after auth setup
     console.log('Registering API routes...');
     registerRoutes(app);
     // Register driver routes
     app.use('/api/driver', driverRoutes);
     console.log('API routes registered successfully');
-    
+
     // Add error handling middleware
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       console.error('Server Error:', err);
@@ -89,9 +108,9 @@ app.use((req, res, next) => {
     console.error('Critical error during server initialization:', error);
     process.exit(1);
   }
-  
+
   const server = createServer(app);
-  
+
   // Set up WebSocket server with proper error handling
   let wss: WebSocketServer | null = null;
 
@@ -108,20 +127,20 @@ app.use((req, res, next) => {
       wss.close();
     }
 
-    wss = new WebSocketServer({ 
+    wss = new WebSocketServer({
       server,
       path: "/ws",
       clientTracking: true
     });
-    
+
     // Initialize WebSocket handling
     setupWebSocket(wss);
-    
+
     // Log WebSocket server status
     wss.on('listening', () => {
       log('WebSocket server is ready');
     });
-    
+
     wss.on('error', (error) => {
       console.error('WebSocket server error:', error);
     });
@@ -139,11 +158,11 @@ app.use((req, res, next) => {
   app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-    
+
     console.error(`[Error] ${status}: ${message}`);
-    
+
     // Send error response without throwing
-    res.status(status).json({ 
+    res.status(status).json({
       status: 'error',
       message: app.get('env') === 'development' ? message : 'Internal Server Error'
     });
@@ -189,7 +208,7 @@ app.use((req, res, next) => {
     console.error('Failed to start server:', error);
     process.exit(1);
   }
-  
+
   // Handle graceful shutdown
   process.on('SIGTERM', () => {
     log('SIGTERM received. Shutting down gracefully...');
