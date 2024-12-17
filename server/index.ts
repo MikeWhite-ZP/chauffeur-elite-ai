@@ -6,6 +6,11 @@ import { createServer } from "http";
 import { WebSocketServer } from "ws";
 import { setupWebSocket } from "./websocket";
 import { setupAuth } from "./auth";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Extend express Request type to include user
 declare global {
@@ -32,6 +37,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 async function startServer() {
   try {
     // Database connection
+    console.log('Initializing database connection...');
     const { testDatabaseConnection } = await import('./db');
     const connected = await testDatabaseConnection();
     if (!connected) {
@@ -39,22 +45,18 @@ async function startServer() {
     }
     console.log('Database connection successful');
 
-    // Create server instance
-    const server = createServer(app);
-
     // Core setup
+    console.log('Setting up core server components...');
     setupAuth(app);
     registerRoutes(app);
     app.use('/api/driver', driverRoutes);
 
-    // Error handling
-    app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-      console.error('Server Error:', err);
-      res.status(500).json({ error: err.message });
-    });
+    // Create HTTP server
+    const server = createServer(app);
 
     // Setup development or production mode
     if (process.env.NODE_ENV === "development") {
+      console.log('Setting up development environment...');
       try {
         await setupVite(app, server);
         console.log('Vite middleware setup completed');
@@ -63,28 +65,45 @@ async function startServer() {
         throw error;
       }
     } else {
-      // Serve static files from the dist/public directory
-      app.use(express.static(path.join(__dirname, '../dist/public')));
+      console.log('Setting up production environment...');
+      const publicPath = path.resolve(__dirname, '../dist/public');
+      app.use(express.static(publicPath));
       app.get('*', (_req, res) => {
-        res.sendFile(path.join(__dirname, '../dist/public/index.html'));
+        res.sendFile(path.join(publicPath, 'index.html'));
       });
     }
 
+    // Error handling middleware (should be after routes)
+    app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+      console.error('Server Error:', err);
+      res.status(500).json({ error: err.message });
+    });
+
     // Setup WebSocket
+    console.log('Setting up WebSocket server...');
     const wss = new WebSocketServer({ server, path: "/ws" });
     setupWebSocket(wss);
 
     // Start server
     const port = Number(process.env.PORT) || 5000;
-    server.listen(port, '0.0.0.0', () => {
-      console.log(`Server running on port ${port}`);
+    await new Promise<void>((resolve) => {
+      server.listen(port, '0.0.0.0', () => {
+        console.log(`Server running on port ${port}`);
+        resolve();
+      });
     });
 
     return server;
   } catch (error) {
     console.error('Server startup failed:', error);
-    process.exit(1);
+    throw error; // Let the error propagate instead of exiting
   }
 }
+
+// Handle unhandled rejections
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled rejection:', error);
+  process.exit(1);
+});
 
 startServer().catch(console.error);
