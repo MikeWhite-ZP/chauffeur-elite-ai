@@ -11,7 +11,7 @@ interface WebSocketError extends Error {
 }
 
 // Message type definitions
-type MessageType = 'init' | 'subscribe_tracking' | 'location_update' | 'ping' | 'pong' | 'error' | 'connection_established' | 'init_success' | 'subscribe_success';
+type MessageType = 'init' | 'subscribe_tracking' | 'location_update' | 'ping' | 'pong' | 'error' | 'connection_established' | 'init_success' | 'subscribe_success' | 'location_update_ack';
 
 interface BaseMessage {
   type: MessageType;

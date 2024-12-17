@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import TrackingMap from '@/components/TrackingMap';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from "@/components/ui/badge";
+import DailyBookings from '@/components/DailyBookings';
 
 interface ActiveBooking {
   id: number;
@@ -117,6 +118,11 @@ export default function LiveTracking() {
                           <div className="pt-2 text-sm">
                             <p className="font-medium">Pickup: {booking.pickup_location}</p>
                             <p className="font-medium">Dropoff: {booking.dropoff_location}</p>
+                            {booking.estimated_arrival_time && (
+                              <p className="font-medium text-primary">
+                                ETA: {new Date(booking.estimated_arrival_time).toLocaleTimeString()}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -141,9 +147,7 @@ export default function LiveTracking() {
                 ))}
               </>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No active bookings to track</p>
-              </div>
+              <DailyBookings />
             )}
           </div>
         </CardContent>

@@ -13,6 +13,8 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 interface TrackingMapProps {
   bookingId: number;
   initialPosition?: { lat: number; lng: number };
+  showRoute?: boolean;
+  destination?: { lat: number; lng: number };
 }
 
 const defaultCenter = {

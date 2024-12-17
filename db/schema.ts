@@ -191,6 +191,10 @@ export const bookings = pgTable("bookings", {
   lastKnownLongitude: decimal("last_known_longitude", { precision: 10, scale: 7 }),
   lastLocationUpdate: timestamp("last_location_update"),
   estimatedArrivalTime: timestamp("estimated_arrival_time"),
+  pickupLatitude: decimal("pickup_latitude", { precision: 10, scale: 7 }),
+  pickupLongitude: decimal("pickup_longitude", { precision: 10, scale: 7 }),
+  dropoffLatitude: decimal("dropoff_latitude", { precision: 10, scale: 7 }),
+  dropoffLongitude: decimal("dropoff_longitude", { precision: 10, scale: 7 }),
   
   // System Fields
   createdAt: timestamp("created_at").defaultNow(),
