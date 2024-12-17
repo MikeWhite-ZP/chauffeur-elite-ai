@@ -5,33 +5,39 @@ import * as schema from '@db/schema';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production',
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
+  connectionTimeoutMillis: 20000, // Increased timeout
 });
 
 // Add error handler for the pool
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
-  process.exit(-1);
+  // Don't exit the process, just log the error
+  console.error('Database connection error:', err);
 });
 
-// Test the connection
-async function testConnection() {
-  try {
-    const client = await pool.connect();
-    console.log('Database connection successful');
-    client.release();
-    return true;
-  } catch (err) {
-    console.error('Error testing database connection:', err);
-    return false;
+async function waitForConnection(maxAttempts = 5) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const client = await pool.connect();
+      console.log('Database connection successful');
+      client.release();
+      return true;
+    } catch (err) {
+      console.error(`Database connection attempt ${attempt}/${maxAttempts} failed:`, err);
+      if (attempt < maxAttempts) {
+        console.log(`Retrying in 2 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
   }
+  return false;
 }
 
-// Export the connection test
-export const testDatabaseConnection = testConnection;
+// Export the connection test with retry mechanism
+export const testDatabaseConnection = waitForConnection;
 
 // Export the database instance
 export const db = drizzle(pool, { schema });
