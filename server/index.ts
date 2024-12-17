@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import driverRoutes from "./routes/driver";
 import { setupVite, serveStatic } from "./vite";
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
@@ -74,6 +75,8 @@ app.use((req, res, next) => {
     // Register API routes after auth setup
     console.log('Registering API routes...');
     registerRoutes(app);
+    // Register driver routes
+    app.use('/api/driver', driverRoutes);
     console.log('API routes registered successfully');
     
     // Add error handling middleware

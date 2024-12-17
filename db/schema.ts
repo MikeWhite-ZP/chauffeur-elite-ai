@@ -295,3 +295,57 @@ export const insertEmergencyIncidentSchema = createInsertSchema(emergencyInciden
 export const selectEmergencyIncidentSchema = createSelectSchema(emergencyIncidents);
 export type InsertEmergencyIncident = z.infer<typeof insertEmergencyIncidentSchema>;
 export type EmergencyIncident = z.infer<typeof selectEmergencyIncidentSchema>;
+
+// Driver Achievements Table
+export const driverAchievements = pgTable("driver_achievements", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  badgeIcon: text("badge_icon").notNull(),
+  criteria: json("criteria").notNull(), // JSON object containing achievement criteria
+  points: integer("points").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Driver Performance Metrics Table
+export const driverPerformanceMetrics = pgTable("driver_performance_metrics", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  chauffeurId: integer("chauffeur_id").references(() => chauffeurs.id),
+  totalTrips: integer("total_trips").default(0),
+  completedTrips: integer("completed_trips").default(0),
+  cancelledTrips: integer("cancelled_trips").default(0),
+  totalRatings: integer("total_ratings").default(0),
+  averageRating: decimal("average_rating", { precision: 3, scale: 2 }),
+  onTimePercentage: decimal("on_time_percentage", { precision: 5, scale: 2 }),
+  totalPoints: integer("total_points").default(0),
+  currentStreak: integer("current_streak").default(0),
+  bestStreak: integer("best_streak").default(0),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+});
+
+// Driver Earned Achievements Table
+export const driverEarnedAchievements = pgTable("driver_earned_achievements", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  chauffeurId: integer("chauffeur_id").references(() => chauffeurs.id),
+  achievementId: integer("achievement_id").references(() => driverAchievements.id),
+  earnedAt: timestamp("earned_at").defaultNow(),
+  pointsAwarded: integer("points_awarded").notNull(),
+});
+
+// Export schemas and types for new tables
+export const insertDriverAchievementSchema = createInsertSchema(driverAchievements);
+export const selectDriverAchievementSchema = createSelectSchema(driverAchievements);
+export type InsertDriverAchievement = z.infer<typeof insertDriverAchievementSchema>;
+export type DriverAchievement = z.infer<typeof selectDriverAchievementSchema>;
+
+export const insertDriverPerformanceMetricsSchema = createInsertSchema(driverPerformanceMetrics);
+export const selectDriverPerformanceMetricsSchema = createSelectSchema(driverPerformanceMetrics);
+export type InsertDriverPerformanceMetrics = z.infer<typeof insertDriverPerformanceMetricsSchema>;
+export type DriverPerformanceMetrics = z.infer<typeof selectDriverPerformanceMetricsSchema>;
+
+export const insertDriverEarnedAchievementSchema = createInsertSchema(driverEarnedAchievements);
+export const selectDriverEarnedAchievementSchema = createSelectSchema(driverEarnedAchievements);
+export type InsertDriverEarnedAchievement = z.infer<typeof insertDriverEarnedAchievementSchema>;
+export type DriverEarnedAchievement = z.infer<typeof selectDriverEarnedAchievementSchema>;
