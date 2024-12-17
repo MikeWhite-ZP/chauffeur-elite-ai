@@ -104,6 +104,13 @@ export function setupWebSocket(wss: WebSocketServer) {
       if (!data || typeof data !== 'object') {
         throw new Error("Invalid message format");
       }
+
+      console.log('WebSocket message received:', {
+        type: data.type,
+        hasClient: clients.has(ws),
+        timestamp: new Date().toISOString()
+      });
+
     } catch (e) {
       handleError(ws, new Error("Invalid JSON message"));
       return;
@@ -118,6 +125,11 @@ export function setupWebSocket(wss: WebSocketServer) {
     if (!client && data.type !== 'init') {
       handleError(ws, new Error("Client not initialized"));
       return;
+    }
+
+    // Update client's last activity timestamp
+    if (client) {
+      client.lastPing = Date.now();
     }
 
     try {
@@ -160,24 +172,54 @@ export function setupWebSocket(wss: WebSocketServer) {
             client.lastPing = Date.now();
           }
 
-          await db.insert(locationTracking).values({
+          // Record the location update with timestamps and validation
+          const timestamp = new Date();
+          const locationRecord = {
             bookingId: locationData.bookingId,
             latitude: locationData.latitude.toString(),
             longitude: locationData.longitude.toString(),
             speed: locationData.speed?.toString(),
             heading: locationData.heading?.toString(),
-            status: 'active'
+            status: 'active',
+            timestamp
+          };
+
+          console.log('Processing location update:', {
+            bookingId: locationData.bookingId,
+            timestamp: timestamp.toISOString(),
+            coordinates: `${locationData.latitude},${locationData.longitude}`
           });
 
-          await db.update(bookings)
-            .set({
-              lastKnownLatitude: locationData.latitude.toString(),
-              lastKnownLongitude: locationData.longitude.toString(),
-              lastLocationUpdate: new Date(),
-            })
-            .where(eq(bookings.id, locationData.bookingId));
+          try {
+            // Insert location record
+            await db.insert(locationTracking).values(locationRecord);
 
-          broadcastLocationUpdate(locationData);
+            // Update booking with latest location
+            await db.update(bookings)
+              .set({
+                lastKnownLatitude: locationData.latitude.toString(),
+                lastKnownLongitude: locationData.longitude.toString(),
+                lastLocationUpdate: timestamp,
+                trackingEnabled: true
+              })
+              .where(eq(bookings.id, locationData.bookingId));
+
+            // Broadcast to all subscribed clients
+            broadcastLocationUpdate({
+              ...locationData,
+              timestamp: timestamp.toISOString()
+            });
+
+            // Send acknowledgment to the sender
+            ws.send(JSON.stringify({
+              type: 'location_update_ack',
+              bookingId: locationData.bookingId,
+              timestamp: timestamp.toISOString()
+            }));
+          } catch (error) {
+            console.error('Failed to process location update:', error);
+            handleError(ws, new Error('Failed to process location update'));
+          }
           break;
         }
 

@@ -63,13 +63,30 @@ export default function TrackingMap({
 
   useEffect(() => {
     if (location) {
-      setPosition({
+      const newPosition = {
         lat: Number(location.latitude),
         lng: Number(location.longitude)
-      });
+      };
+      
+      setPosition(newPosition);
       setLastUpdate(new Date());
+
+      // Log position updates for debugging
+      console.log('Vehicle position updated:', {
+        position: newPosition,
+        timestamp: new Date().toISOString(),
+        booking: bookingId
+      });
     }
-  }, [location]);
+  }, [location, bookingId]);
+
+  // Custom vehicle icon
+  const vehicleIcon = new Icon({
+    iconUrl: '/vehicle-marker.svg',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16],
+  });
 
   const MapPlaceholder = ({ message }: { message: string }) => (
     <div className="relative w-full h-[500px] rounded-lg overflow-hidden bg-background/80 flex flex-col items-center justify-center gap-4">
