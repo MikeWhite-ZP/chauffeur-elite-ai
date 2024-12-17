@@ -22,6 +22,7 @@ async function waitForConnection(maxAttempts = 5) {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       const client = await pool.connect();
+      await client.query('SELECT 1'); // Verify we can actually execute queries
       console.log('Database connection successful');
       client.release();
       return true;
