@@ -14,7 +14,14 @@ interface LocationTrackerProps {
 }
 
 export default function LocationTracker({ bookingId, isActive, role = 'driver' }: LocationTrackerProps) {
-  const { updateLocation, connectionStatus, error, location } = useLocationTracking(bookingId);
+  interface Location {
+  latitude: number;
+  longitude: number;
+  speed?: number;
+  heading?: number;
+}
+
+const { updateLocation, connectionStatus, error, location } = useLocationTracking(bookingId);
   const { user } = useUser();
   const [isTracking, setIsTracking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

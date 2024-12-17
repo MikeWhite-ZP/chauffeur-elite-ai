@@ -24,6 +24,7 @@ interface LocationUpdate extends BaseMessage {
   longitude: number;
   speed?: number;
   heading?: number;
+  timestamp?: string;
 }
 
 interface InitMessage extends BaseMessage {
@@ -54,8 +55,19 @@ interface TrackingClient {
   lastPing?: number;
 }
 
+interface LocationUpdateAck extends BaseMessage {
+  type: 'location_update_ack';
+  bookingId: number;
+  timestamp: string;
+}
+
+interface ConnectionEstablished extends BaseMessage {
+  type: 'connection_established';
+  timestamp: string;
+}
+
 type IncomingMessage = LocationUpdate | InitMessage | SubscribeMessage | PingMessage;
-type OutgoingMessage = LocationUpdate | ErrorMessage | BaseMessage;
+type OutgoingMessage = LocationUpdate | ErrorMessage | BaseMessage | LocationUpdateAck | ConnectionEstablished;
 
 const clients = new Map<WS, TrackingClient>();
 
@@ -174,15 +186,15 @@ export function setupWebSocket(wss: WebSocketServer) {
 
           // Record the location update with timestamps and validation
           const timestamp = new Date();
-          const locationRecord = {
+          const locationRecord = [{
             bookingId: locationData.bookingId,
             latitude: locationData.latitude.toString(),
             longitude: locationData.longitude.toString(),
-            speed: locationData.speed?.toString(),
-            heading: locationData.heading?.toString(),
-            status: 'active',
+            speed: locationData.speed?.toString() ?? null,
+            heading: locationData.heading?.toString() ?? null,
+            status: 'active' as const,
             timestamp
-          };
+          }];
 
           console.log('Processing location update:', {
             bookingId: locationData.bookingId,
@@ -246,6 +258,12 @@ export function setupWebSocket(wss: WebSocketServer) {
     if (clients.has(ws)) {
       handleClose(ws);
     }
+
+    // Set up error handling for the new connection
+    ws.on('error', (error: Error) => {
+      console.error('WebSocket connection error:', error);
+      handleError(ws, error);
+    });
     
     if (ws.readyState === WS.OPEN) {
       try {

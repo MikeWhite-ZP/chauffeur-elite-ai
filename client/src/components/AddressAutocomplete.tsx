@@ -48,7 +48,7 @@ interface TomTomResponse {
 
 interface AddressAutocompleteProps {
   value: string;
-  onChange: (value: string, position?: { lat: number; lon: number }) => void;
+  onChange: (value: string, position: { lat: number; lon: number } | null) => void;
   placeholder?: string;
   useGeolocation?: boolean;
 }
@@ -193,7 +193,7 @@ export function AddressAutocomplete({
     const selectedAddress = result.address.freeformAddress;
     onChange(
       selectedAddress === value ? "" : selectedAddress,
-      result.position
+      result.position ? { lat: result.position.lat, lon: result.position.lon } : null
     );
     setOpen(false);
   };
