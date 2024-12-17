@@ -100,9 +100,26 @@ export default function LiveTracking() {
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <p className="font-semibold">Booking #{booking.id}</p>
-                            <Badge variant={booking.status === 'in_progress' ? 'default' : 'secondary'}>
+                            <Badge 
+                              variant={
+                                booking.status === 'in_progress' ? 'default' :
+                                booking.status === 'completed' ? 'success' :
+                                booking.status === 'cancelled' ? 'destructive' :
+                                'secondary'
+                              }
+                            >
                               {booking.status}
                             </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Badge variant="outline" className="text-xs">
+                              {booking.tracking_enabled ? 'Live Tracking' : 'No Tracking'}
+                            </Badge>
+                            {booking.estimated_arrival_time && (
+                              <Badge variant="outline" className="text-xs">
+                                ETA: {new Date(booking.estimated_arrival_time).toLocaleTimeString()}
+                              </Badge>
+                            )}
                           </div>
                           <div className="space-y-1">
                             <p className="text-sm text-muted-foreground">

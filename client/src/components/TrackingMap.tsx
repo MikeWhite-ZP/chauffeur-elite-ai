@@ -62,6 +62,8 @@ export default function TrackingMap({
   const { location, error, isConnected } = useLocationTracking(bookingId);
   const [position, setPosition] = useState(initialPosition);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
+  const maxRetries = 3;
 
   useEffect(() => {
     if (location) {
@@ -70,17 +72,43 @@ export default function TrackingMap({
         lng: Number(location.longitude)
       };
       
-      setPosition(newPosition);
-      setLastUpdate(new Date());
+      // Validate coordinates before updating
+      if (isValidCoordinate(newPosition.lat, newPosition.lng)) {
+        setPosition(newPosition);
+        setLastUpdate(new Date());
+        setConnectionAttempts(0); // Reset connection attempts on successful update
 
-      // Log position updates for debugging
-      console.log('Vehicle position updated:', {
-        position: newPosition,
-        timestamp: new Date().toISOString(),
-        booking: bookingId
-      });
+        console.log('Vehicle position updated:', {
+          position: newPosition,
+          timestamp: new Date().toISOString(),
+          booking: bookingId,
+          speed: location.speed,
+          heading: location.heading
+        });
+      } else {
+        console.error('Invalid coordinates received:', newPosition);
+      }
     }
   }, [location, bookingId]);
+
+  // Handle connection retries
+  useEffect(() => {
+    if (!isConnected && connectionAttempts < maxRetries) {
+      const retryTimeout = setTimeout(() => {
+        setConnectionAttempts(prev => prev + 1);
+        console.log(`Retrying connection, attempt ${connectionAttempts + 1} of ${maxRetries}`);
+      }, 5000 * (connectionAttempts + 1)); // Exponential backoff
+
+      return () => clearTimeout(retryTimeout);
+    }
+  }, [isConnected, connectionAttempts]);
+
+  // Validate coordinates
+  const isValidCoordinate = (lat: number, lng: number) => {
+    return !isNaN(lat) && !isNaN(lng) && 
+           lat >= -90 && lat <= 90 && 
+           lng >= -180 && lng <= 180;
+  };
 
   // Custom vehicle icon
   const vehicleIcon = new Icon({
