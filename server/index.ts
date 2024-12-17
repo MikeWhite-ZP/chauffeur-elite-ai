@@ -83,7 +83,6 @@ app.use((req, res, next) => {
       throw new Error('Failed to connect to database after 3 attempts');
     }
 
-    // Start server initialization
     console.log('Starting server initialization...');
 
     // Setup authentication
