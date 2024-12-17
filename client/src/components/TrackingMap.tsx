@@ -112,6 +112,18 @@ export default function TrackingMap({
     );
   }
 
+  // Check if TomTom API key is configured
+  if (!import.meta.env.VITE_TOMTOM_API_KEY) {
+    return (
+      <div className="relative w-full h-[500px] rounded-lg overflow-hidden bg-destructive/10 flex items-center justify-center">
+        <div className="text-center p-4">
+          <p className="text-destructive font-semibold mb-2">Configuration Error</p>
+          <p className="text-destructive/80">TomTom API key is not configured.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-[500px] rounded-lg overflow-hidden">
       <MapContainer
@@ -119,10 +131,12 @@ export default function TrackingMap({
         zoom={13}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
+        zoomControl={true}
       >
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url={`https://api.tomtom.com/map/1/tile/basic/main/{z}/{x}/{y}.png?key=${import.meta.env.VITE_TOMTOM_API_KEY}`}
+          attribution='&copy; <a href="https://www.tomtom.com">TomTom</a>'
+          maxZoom={22}
         />
         <Marker position={[position.lat, position.lng]}>
           <Popup>

@@ -16,9 +16,19 @@ import { useLocation } from "wouter";
 import type { Booking } from "@db/schema";
 
 // Additional fields needed for the UI
-interface BookingWithDetails extends Booking {
+interface BookingWithDetails extends Omit<Booking, 'id'> {
+  id: number;
+  tripId: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  pickupDate: Date;
+  pickupTime: string;
+  passengerFirstName: string;
+  passengerLastName: string;
   driverName?: string;
-  passengerName?: string;
+  jobStatus: string;
+  grandTotal: string;
+  totalDue: string;
 }
 
 const JOB_STATUSES = [
