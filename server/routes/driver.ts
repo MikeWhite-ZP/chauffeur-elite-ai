@@ -93,8 +93,8 @@ router.get("/stats", async (req, res) => {
           completedTrips: 0,
           cancelledTrips: 0,
           totalRatings: 0,
-          averageRating: '0',
-          onTimePercentage: 100,
+          averageRating: '0.0',
+          onTimePercentage: '100.0',
           totalPoints: 0,
           currentStreak: 0,
           bestStreak: 0,
@@ -180,7 +180,7 @@ router.get("/stats", async (req, res) => {
       todayAssignments,
       rating: metrics.averageRating ? Number(metrics.averageRating) : 0,
       completedTrips: metrics.completedTrips ?? 0,
-      onTimePercentage: metrics.onTimePercentage ?? 100,
+      onTimePercentage: metrics.onTimePercentage ? Number(metrics.onTimePercentage) : 100,
       currentStatus: chauffeur.isAvailable ? 'available' : 'busy',
       currentStreak: metrics.currentStreak ?? 0,
       bestStreak: metrics.bestStreak ?? 0,
@@ -249,7 +249,7 @@ router.get("/leaderboard", async (req, res) => {
             driverAchievements,
             eq(driverEarnedAchievements.achievementId, driverAchievements.id)
           )
-          .where(eq(driverEarnedAchievements.chauffeurId, driver.id));
+          .where(eq(driverEarnedAchievements.chauffeurId, driver.id as number));
 
         const [level, nextLevelPoints] = calculateLevel(driver.totalPoints);
         return {
