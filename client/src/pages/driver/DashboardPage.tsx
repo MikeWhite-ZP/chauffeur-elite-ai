@@ -2,7 +2,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useQuery } from "@tanstack/react-query";
 import { Car, Star, Calendar, MapPin, Award, Flame, TrendingUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { WellnessScoreWidget } from "@/components/WellnessScoreWidget";
 import { SparklineGraph } from "@/components/SparklineGraph";
+
+interface WellnessMetrics {
+  hoursWorkedToday: number;
+  hoursWorkedWeek: number;
+  lastBreakTime: string | null;
+  breaksTaken: number;
+  restHoursLast24h: number;
+  routeComplexityScore: number;
+  trafficStressScore: number;
+  wellnessScore: number;
+}
 
 interface Achievement {
   id: number;
@@ -33,7 +45,19 @@ interface DriverStats {
 }
 
 export default function DriverDashboard() {
-  const { data: stats, isLoading } = useQuery<DriverStats>({
+  const { data: wellnessMetrics, isLoading: wellnessLoading } = useQuery<WellnessMetrics>({
+    queryKey: ["driver-wellness"],
+    queryFn: async () => {
+      const response = await fetch("/api/driver/wellness");
+      if (!response.ok) {
+        throw new Error("Failed to fetch wellness metrics");
+      }
+      return response.json();
+    },
+    refetchInterval: 300000, // Refresh every 5 minutes
+  });
+
+  const { data: stats, isLoading: statsLoading } = useQuery<DriverStats>({
     queryKey: ["driver-stats"],
     queryFn: async () => {
       const response = await fetch("/api/driver/stats");
@@ -44,7 +68,7 @@ export default function DriverDashboard() {
     },
   });
 
-  if (isLoading) {
+  if (statsLoading || wellnessLoading) {
     return <div>Loading...</div>;
   }
 
@@ -140,6 +164,8 @@ export default function DriverDashboard() {
         )}
       </Card>
 
+      {wellnessMetrics && <WellnessScoreWidget metrics={wellnessMetrics} className="mb-6" />}
+      
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (
           <Card key={card.title}>

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db";
-import { bookings, chauffeurs, users, driverPerformanceMetrics, driverAchievements, driverEarnedAchievements } from "@db/schema";
+import { bookings, chauffeurs, users, driverPerformanceMetrics, driverAchievements, driverEarnedAchievements, driverWellnessMetrics } from "@db/schema";
 import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 
@@ -88,17 +88,17 @@ router.get("/stats", async (req, res) => {
       const [newMetrics] = await db
         .insert(driverPerformanceMetrics)
         .values({
-          chauffeur_id: chauffeur.id,
-          total_trips: 0,
-          completed_trips: 0,
-          cancelled_trips: 0,
-          total_ratings: 0,
-          average_rating: 0,
-          on_time_percentage: 100,
-          total_points: 0,
-          current_streak: 0,
-          best_streak: 0,
-          last_updated: new Date(),
+          chauffeurId: chauffeur.id,
+          totalTrips: 0,
+          completedTrips: 0,
+          cancelledTrips: 0,
+          totalRatings: 0,
+          averageRating: '0',
+          onTimePercentage: 100,
+          totalPoints: 0,
+          currentStreak: 0,
+          bestStreak: 0,
+          lastUpdated: new Date(),
         })
         .returning();
       
@@ -178,13 +178,13 @@ router.get("/stats", async (req, res) => {
 
     res.json({
       todayAssignments,
-      rating: metrics.average_rating ?? 0,
-      completedTrips: metrics.completed_trips ?? 0,
-      onTimePercentage: metrics.on_time_percentage ?? 100,
-      currentStatus: chauffeur.is_available ? 'available' : 'busy',
-      currentStreak: metrics.current_streak ?? 0,
-      bestStreak: metrics.best_streak ?? 0,
-      totalPoints: metrics.total_points ?? 0,
+      rating: metrics.averageRating ? Number(metrics.averageRating) : 0,
+      completedTrips: metrics.completedTrips ?? 0,
+      onTimePercentage: metrics.onTimePercentage ?? 100,
+      currentStatus: chauffeur.isAvailable ? 'available' : 'busy',
+      currentStreak: metrics.currentStreak ?? 0,
+      bestStreak: metrics.bestStreak ?? 0,
+      totalPoints: metrics.totalPoints ?? 0,
       level,
       nextLevelPoints,
       recentAchievement,
@@ -291,3 +291,75 @@ interface PerformanceTrend {
   onTime: MetricHistory[];
   points: MetricHistory[];
 }
+interface WellnessMetrics {
+  hoursWorkedToday: number;
+  hoursWorkedWeek: number;
+  lastBreakTime: string | null;
+  breaksTaken: number;
+  restHoursLast24h: number;
+  routeComplexityScore: number;
+  trafficStressScore: number;
+  wellnessScore: number;
+}
+
+// GET /api/driver/wellness
+router.get("/wellness", async (req, res) => {
+  try {
+    if (!req.isAuthenticated() || req.user?.role !== 'driver') {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const [chauffeur] = await db
+      .select()
+      .from(chauffeurs)
+      .where(eq(chauffeurs.userId, req.user.id))
+      .limit(1);
+
+    if (!chauffeur) {
+      return res.status(404).json({ error: "Driver not found" });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get today's wellness metrics
+    const [metrics] = await db
+      .select()
+      .from(driverWellnessMetrics)
+      .where(
+        and(
+          eq(driverWellnessMetrics.chauffeurId, chauffeur.id),
+          eq(sql`date(${driverWellnessMetrics.createdAt})`, sql`current_date`)
+        )
+      )
+      .limit(1);
+
+    if (!metrics) {
+      // Return default metrics if none exist for today
+      return res.json({
+        hoursWorkedToday: 0,
+        hoursWorkedWeek: 0,
+        lastBreakTime: null,
+        breaksTaken: 0,
+        restHoursLast24h: 8, // Assume 8 hours rest by default
+        routeComplexityScore: 0,
+        trafficStressScore: 0,
+        wellnessScore: 100, // Start with perfect score
+      });
+    }
+
+    res.json({
+      hoursWorkedToday: Number(metrics.hoursWorkedToday),
+      hoursWorkedWeek: Number(metrics.hoursWorkedWeek),
+      lastBreakTime: metrics.lastBreakTime?.toISOString() || null,
+      breaksTaken: metrics.breaksTaken,
+      restHoursLast24h: Number(metrics.restHoursLast24h),
+      routeComplexityScore: Number(metrics.routeComplexityScore),
+      trafficStressScore: Number(metrics.trafficStressScore),
+      wellnessScore: Number(metrics.wellnessScore),
+    });
+  } catch (error) {
+    console.error("Error fetching driver wellness metrics:", error);
+    res.status(500).json({ error: "Failed to fetch wellness metrics" });
+  }
+});

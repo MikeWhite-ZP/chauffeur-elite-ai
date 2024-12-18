@@ -349,3 +349,25 @@ export const insertDriverEarnedAchievementSchema = createInsertSchema(driverEarn
 export const selectDriverEarnedAchievementSchema = createSelectSchema(driverEarnedAchievements);
 export type InsertDriverEarnedAchievement = z.infer<typeof insertDriverEarnedAchievementSchema>;
 export type DriverEarnedAchievement = z.infer<typeof selectDriverEarnedAchievementSchema>;
+// Driver Wellness Metrics Table
+export const driverWellnessMetrics = pgTable("driver_wellness_metrics", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  chauffeurId: integer("chauffeur_id").references(() => chauffeurs.id),
+  date: timestamp("date").notNull().defaultNow(),
+  hoursWorkedToday: decimal("hours_worked_today", { precision: 5, scale: 2 }).default('0'),
+  hoursWorkedWeek: decimal("hours_worked_week", { precision: 5, scale: 2 }).default('0'),
+  lastBreakTime: timestamp("last_break_time"),
+  breaksTaken: integer("breaks_taken").default(0),
+  restHoursLast24h: decimal("rest_hours_last_24h", { precision: 5, scale: 2 }).default('0'),
+  routeComplexityScore: decimal("route_complexity_score", { precision: 3, scale: 2 }).default('0'),
+  trafficStressScore: decimal("traffic_stress_score", { precision: 3, scale: 2 }).default('0'),
+  wellnessScore: decimal("wellness_score", { precision: 3, scale: 2 }).default('0'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Export schemas and types for driver wellness metrics
+export const insertDriverWellnessMetricsSchema = createInsertSchema(driverWellnessMetrics);
+export const selectDriverWellnessMetricsSchema = createSelectSchema(driverWellnessMetrics);
+export type InsertDriverWellnessMetrics = z.infer<typeof insertDriverWellnessMetricsSchema>;
+export type DriverWellnessMetrics = z.infer<typeof selectDriverWellnessMetricsSchema>;
