@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useQuery } from "@tanstack/react-query";
 import { Car, Star, Calendar, MapPin, Award, Flame, TrendingUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { SparklineGraph } from "@/components/SparklineGraph";
 
 interface Achievement {
   id: number;
@@ -23,6 +24,12 @@ interface DriverStats {
   level: number;
   nextLevelPoints: number;
   recentAchievement?: Achievement;
+  performanceTrends: {
+    ratings: Array<{ value: number; timestamp: string }>;
+    trips: Array<{ value: number; timestamp: string }>;
+    onTime: Array<{ value: number; timestamp: string }>;
+    points: Array<{ value: number; timestamp: string }>;
+  };
 }
 
 export default function DriverDashboard() {
@@ -146,6 +153,31 @@ export default function DriverDashboard() {
               <div className="text-2xl font-bold">{card.value}</div>
               {card.description && (
                 <p className="text-sm text-muted-foreground mt-1">{card.description}</p>
+              )}
+              {stats?.performanceTrends && (
+                <div className="mt-2">
+                  {card.title === "Rating" && (
+                    <SparklineGraph
+                      data={stats.performanceTrends.ratings}
+                      color="#eab308"
+                      height={40}
+                    />
+                  )}
+                  {card.title === "Completed Trips" && (
+                    <SparklineGraph
+                      data={stats.performanceTrends.trips}
+                      color="#22c55e"
+                      height={40}
+                    />
+                  )}
+                  {card.title === "On-Time Performance" && (
+                    <SparklineGraph
+                      data={stats.performanceTrends.onTime}
+                      color="#8b5cf6"
+                      height={40}
+                    />
+                  )}
+                </div>
               )}
               {card.title === "Driver Level" && stats && (
                 <div className="mt-2">

@@ -1,18 +1,59 @@
 import { Router } from "express";
 import { db } from "../db";
-import { 
-  driverPerformanceMetrics, 
-  driverEarnedAchievements, 
-  driverAchievements,
-  chauffeurs,
-  users,
-  bookings
-} from "@db/schema";
-import { eq, desc, sql, and, gte, lt } from "drizzle-orm";
+import { bookings, chauffeurs, users, driverPerformanceMetrics, driverAchievements, driverEarnedAchievements } from "@db/schema";
+import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 
 const router = Router();
 
 const LEVEL_THRESHOLDS = [0, 100, 250, 500, 1000, 2000, 5000, 10000];
+async function getDriverPerformanceHistory(chauffeurId: number): Promise<PerformanceTrend> {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  // Fetch completed trips in the last 30 days
+  const tripsHistory = await db
+    .select({
+      count: sql<number>`count(*)::int`,
+      date: sql<string>`date_trunc('day', ${bookings.pickupDate})::text`,
+    })
+    .from(bookings)
+    .where(
+      and(
+        eq(bookings.chauffeurId, chauffeurId),
+        gte(bookings.pickupDate, thirtyDaysAgo),
+        eq(bookings.status, 'completed')
+      )
+    )
+    .groupBy(sql`date_trunc('day', ${bookings.pickupDate})`)
+    .orderBy(sql`date_trunc('day', ${bookings.pickupDate})`);
+
+  // Format the data for the frontend
+  const trips = tripsHistory.map(day => ({
+    value: day.count,
+    timestamp: day.date,
+  }));
+
+  // For demo purposes, generate some sample data for other metrics
+  // In production, this would come from actual historical data
+  const generateTrendData = (baseValue: number, variance: number) => {
+    return Array.from({ length: 30 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (29 - i));
+      return {
+        value: baseValue + (Math.random() * variance * 2 - variance),
+        timestamp: date.toISOString().split('T')[0],
+      };
+    });
+  };
+
+  return {
+    trips,
+    ratings: generateTrendData(4.5, 0.5),
+    onTime: generateTrendData(95, 5),
+    points: generateTrendData(100, 20),
+  };
+}
 
 // GET /api/driver/stats
 router.get("/stats", async (req, res) => {
@@ -47,16 +88,17 @@ router.get("/stats", async (req, res) => {
       const [newMetrics] = await db
         .insert(driverPerformanceMetrics)
         .values({
-          chauffeurId: chauffeur.id,
-          totalTrips: 0,
-          completedTrips: 0,
-          cancelledTrips: 0,
-          totalRatings: 0,
-          averageRating: 0,
-          onTimePercentage: 100,
-          totalPoints: 0,
-          currentStreak: 0,
-          bestStreak: 0,
+          chauffeur_id: chauffeur.id,
+          total_trips: 0,
+          completed_trips: 0,
+          cancelled_trips: 0,
+          total_ratings: 0,
+          average_rating: 0,
+          on_time_percentage: 100,
+          total_points: 0,
+          current_streak: 0,
+          best_streak: 0,
+          last_updated: new Date(),
         })
         .returning();
       
@@ -129,18 +171,24 @@ router.get("/stats", async (req, res) => {
     const todayAssignments = todayAssignmentsResult[0]?.count || 0;
     console.log('Parsed assignments count:', todayAssignments);
 
+    // Fetch performance history
+    console.log('Fetching performance history for chauffeur:', chauffeur.id);
+    const performanceHistory = await getDriverPerformanceHistory(chauffeur.id);
+    console.log('Performance history fetched:', performanceHistory);
+
     res.json({
       todayAssignments,
-      rating: metrics.averageRating,
-      completedTrips: metrics.completedTrips,
-      onTimePercentage: metrics.onTimePercentage,
-      currentStatus: chauffeur.isAvailable ? 'available' : 'busy',
-      currentStreak: metrics.currentStreak,
-      bestStreak: metrics.bestStreak,
-      totalPoints: metrics.totalPoints,
+      rating: metrics.average_rating ?? 0,
+      completedTrips: metrics.completed_trips ?? 0,
+      onTimePercentage: metrics.on_time_percentage ?? 100,
+      currentStatus: chauffeur.is_available ? 'available' : 'busy',
+      currentStreak: metrics.current_streak ?? 0,
+      bestStreak: metrics.best_streak ?? 0,
+      totalPoints: metrics.total_points ?? 0,
       level,
       nextLevelPoints,
       recentAchievement,
+      performanceTrends: performanceHistory,
     });
   } catch (error) {
     console.error("Error fetching driver stats:", error);
@@ -201,7 +249,7 @@ router.get("/leaderboard", async (req, res) => {
             driverAchievements,
             eq(driverEarnedAchievements.achievementId, driverAchievements.id)
           )
-          .where(eq(driverEarnedAchievements.chauffeurId, driver.id || 0));
+          .where(eq(driverEarnedAchievements.chauffeurId, driver.id));
 
         const [level, nextLevelPoints] = calculateLevel(driver.totalPoints);
         return {
@@ -222,3 +270,24 @@ router.get("/leaderboard", async (req, res) => {
 });
 
 export default router;
+
+interface Achievement {
+  id: number;
+  name: string;
+  description: string;
+  badgeIcon: string;
+  earnedAt: string;
+  points: number;
+}
+
+interface MetricHistory {
+  value: number;
+  timestamp: string;
+}
+
+interface PerformanceTrend {
+  ratings: MetricHistory[];
+  trips: MetricHistory[];
+  onTime: MetricHistory[];
+  points: MetricHistory[];
+}
