@@ -7,7 +7,7 @@ import {
   chauffeurs,
   users 
 } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 const router = Router();
 
@@ -31,6 +31,7 @@ function calculateLevel(points: number): [number, number] {
 
 router.get("/leaderboard", async (req, res) => {
   try {
+    console.log('Fetching driver performance data...');
     const performanceData = await db
       .select({
         id: chauffeurs.id,
@@ -44,11 +45,13 @@ router.get("/leaderboard", async (req, res) => {
       .from(driverPerformanceMetrics)
       .innerJoin(chauffeurs, eq(driverPerformanceMetrics.chauffeurId, chauffeurs.id))
       .innerJoin(users, eq(chauffeurs.userId, users.id))
-      .orderBy(driverPerformanceMetrics.totalPoints, "desc");
+      .orderBy(desc(driverPerformanceMetrics.totalPoints));
 
     // Fetch achievements for each driver
+    console.log('Found performance data:', performanceData);
     const driversWithAchievements = await Promise.all(
       performanceData.map(async (driver) => {
+        console.log('Fetching achievements for driver:', driver.id);
         const achievements = await db
           .select({
             id: driverAchievements.id,
@@ -63,7 +66,7 @@ router.get("/leaderboard", async (req, res) => {
             driverAchievements,
             eq(driverEarnedAchievements.achievementId, driverAchievements.id)
           )
-          .where(eq(driverEarnedAchievements.chauffeurId, driver.id));
+          .where(eq(driverEarnedAchievements.chauffeurId, driver.id || 0));
 
         const [level, nextLevelPoints] = calculateLevel(driver.totalPoints);
         return {
