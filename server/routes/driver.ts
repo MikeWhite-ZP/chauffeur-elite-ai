@@ -32,34 +32,70 @@ router.get("/stats", async (req, res) => {
     }
 
     // Get performance metrics
-    const [metrics] = await db
+    console.log('Fetching performance metrics for chauffeur:', chauffeur.id);
+    const metricsResult = await db
       .select()
       .from(driverPerformanceMetrics)
       .where(eq(driverPerformanceMetrics.chauffeurId, chauffeur.id))
       .limit(1);
 
-    if (!metrics) {
-      return res.status(404).json({ error: "Driver metrics not found" });
+    console.log('Metrics result:', metricsResult);
+
+    if (!metricsResult.length) {
+      // If no metrics exist, create default metrics
+      console.log('Creating default metrics for new driver');
+      const [newMetrics] = await db
+        .insert(driverPerformanceMetrics)
+        .values({
+          chauffeurId: chauffeur.id,
+          totalTrips: 0,
+          completedTrips: 0,
+          cancelledTrips: 0,
+          totalRatings: 0,
+          averageRating: 0,
+          onTimePercentage: 100,
+          totalPoints: 0,
+          currentStreak: 0,
+          bestStreak: 0,
+        })
+        .returning();
+      
+      console.log('Created default metrics:', newMetrics);
+      var metrics = newMetrics;
+    } else {
+      var metrics = metricsResult[0];
     }
 
     // Get most recent achievement
-    const [recentAchievement] = await db
-      .select({
-        id: driverAchievements.id,
-        name: driverAchievements.name,
-        description: driverAchievements.description,
-        badgeIcon: driverAchievements.badgeIcon,
-        points: driverAchievements.points,
-        earnedAt: driverEarnedAchievements.earnedAt,
-      })
-      .from(driverEarnedAchievements)
-      .innerJoin(
-        driverAchievements,
-        eq(driverEarnedAchievements.achievementId, driverAchievements.id)
-      )
-      .where(eq(driverEarnedAchievements.chauffeurId, chauffeur.id))
-      .orderBy(desc(driverEarnedAchievements.earnedAt))
-      .limit(1);
+    console.log('Fetching recent achievement for chauffeur:', chauffeur.id);
+    let recentAchievement = null;
+    try {
+      const achievements = await db
+        .select({
+          id: driverAchievements.id,
+          name: driverAchievements.name,
+          description: driverAchievements.description,
+          badgeIcon: driverAchievements.badgeIcon,
+          points: driverAchievements.points,
+          earnedAt: driverEarnedAchievements.earnedAt,
+        })
+        .from(driverEarnedAchievements)
+        .innerJoin(
+          driverAchievements,
+          eq(driverEarnedAchievements.achievementId, driverAchievements.id)
+        )
+        .where(eq(driverEarnedAchievements.chauffeurId, chauffeur.id))
+        .orderBy(desc(driverEarnedAchievements.earnedAt))
+        .limit(1);
+
+      console.log('Recent achievements query result:', achievements);
+      if (achievements.length > 0) {
+        recentAchievement = achievements[0];
+      }
+    } catch (error) {
+      console.error('Error fetching recent achievement:', error);
+      // Continue without recent achievement
+    }
 
     // Calculate level and next threshold
     const [level, nextLevelPoints] = calculateLevel(metrics.totalPoints || 0);
@@ -70,9 +106,15 @@ router.get("/stats", async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    console.log('Fetching today\'s assignments:', { 
+      chauffeurId: chauffeur.id, 
+      today: today.toISOString(), 
+      tomorrow: tomorrow.toISOString() 
+    });
+
     const todayAssignmentsResult = await db
       .select({
-        count: sql<number>`count(*)::int`,
+        count: sql<number>`cast(count(*) as integer)`,
       })
       .from(bookings)
       .where(
@@ -83,7 +125,9 @@ router.get("/stats", async (req, res) => {
         )
       );
 
+    console.log('Today\'s assignments result:', todayAssignmentsResult);
     const todayAssignments = todayAssignmentsResult[0]?.count || 0;
+    console.log('Parsed assignments count:', todayAssignments);
 
     res.json({
       todayAssignments,
