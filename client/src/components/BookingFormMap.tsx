@@ -36,7 +36,7 @@ Icon.Default.mergeOptions({
 // Component to handle map center updates with smooth animation
 function MapUpdater({ position }: { position: { lat: number; lng: number } }) {
   const map = useMap();
-  
+
   useEffect(() => {
     map.flyTo([position.lat, position.lng], map.getZoom());
   }, [map, position]);
@@ -58,7 +58,6 @@ export default function BookingFormMap({
   useEffect(() => {
     const geocodeAddress = async (address: string) => {
       try {
-        // Using OpenStreetMap's Nominatim service for geocoding
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
         );
@@ -85,40 +84,18 @@ export default function BookingFormMap({
       setError(null);
 
       try {
-        const newMarkers: Array<{ position: [number, number], label: string }> = [];
-        
-        if (pickupLocation) {
-          const pickup = await geocodeAddress(pickupLocation);
-          if (pickup) {
-            newMarkers.push({
-              position: [pickup.lat, pickup.lng],
-              label: 'Pickup'
-            });
-            setCenter(pickup);
-          }
-        }
+        const locations = [pickupLocation, dropoffLocation, ...stops];
+        const geocodedMarkers = await Promise.all(
+          locations.map((loc, idx) =>
+            loc ? geocodeAddress(loc).then(res => res && { position: [res.lat, res.lng], label: idx === 0 ? 'Pickup' : idx === 1 ? 'Dropoff' : 'Stop' }) : null
+          )
+        );
 
-        if (dropoffLocation) {
-          const dropoff = await geocodeAddress(dropoffLocation);
-          if (dropoff) {
-            newMarkers.push({
-              position: [dropoff.lat, dropoff.lng],
-              label: 'Dropoff'
-            });
-          }
+        const filteredMarkers = geocodedMarkers.filter(Boolean) as Array<{ position: [number, number]; label: string }>;
+        if (filteredMarkers.length > 0) {
+          setCenter(filteredMarkers[0].position);
         }
-
-        for (const stop of stops) {
-          const stopLocation = await geocodeAddress(stop);
-          if (stopLocation) {
-            newMarkers.push({
-              position: [stopLocation.lat, stopLocation.lng],
-              label: 'Stop'
-            });
-          }
-        }
-
-        setMarkers(newMarkers);
+        setMarkers(filteredMarkers);
       } catch (err) {
         setError('Failed to load locations on map');
         console.error('Error updating markers:', err);
