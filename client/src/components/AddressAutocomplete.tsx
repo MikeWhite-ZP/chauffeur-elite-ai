@@ -16,6 +16,22 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+// API Error types for better error handling
+type TomTomErrorType = 
+  | 'API_KEY_INVALID'
+  | 'RATE_LIMIT_EXCEEDED'
+  | 'NETWORK_ERROR'
+  | 'INVALID_REQUEST'
+  | 'SERVER_ERROR'
+  | 'TIMEOUT'
+  | 'UNKNOWN';
+
+interface TomTomError {
+  type: TomTomErrorType;
+  message: string;
+  retryable: boolean;
+}
+
 interface TomTomAddress {
   streetNumber?: string;
   streetName?: string;
@@ -36,6 +52,14 @@ interface TomTomResult {
     lon: number;
   };
 }
+
+// Constants for API configuration
+const API_CONFIG = {
+  MAX_RETRIES: 3,
+  RETRY_DELAY: 1000,
+  TIMEOUT: 5000,
+  MIN_SCORE: 0.5
+};
 
 interface AddressAutocompleteProps {
   value: string;
@@ -74,6 +98,27 @@ export function AddressAutocomplete({
     }
   }, [useGeolocation]);
 
+  const classifyError = (error: any): TomTomError => {
+    if (error.message?.includes('API key')) {
+      return { type: 'API_KEY_INVALID', message: 'Invalid API key', retryable: false };
+    }
+    if (error.message?.includes('429')) {
+      return { type: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests, please try again later', retryable: true };
+    }
+    if (error instanceof TypeError || error.message?.includes('network')) {
+      return { type: 'NETWORK_ERROR', message: 'Network connection error', retryable: true };
+    }
+    if (error.message?.includes('timeout')) {
+      return { type: 'TIMEOUT', message: 'Request timed out', retryable: true };
+    }
+    if (error.message?.includes('500')) {
+      return { type: 'SERVER_ERROR', message: 'Server error, please try again', retryable: true };
+    }
+    return { type: 'UNKNOWN', message: 'An unexpected error occurred', retryable: true };
+  };
+
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
   const searchLocations = React.useCallback(async (query: string) => {
     if (!query) {
       setResults([]);
@@ -83,71 +128,105 @@ export function AddressAutocomplete({
     setIsLoading(true);
     setError(null);
 
-    try {
-      const apiKey = import.meta.env.VITE_TOMTOM_API_KEY;
-      if (!apiKey) {
-        throw new Error('TomTom API key is missing');
+    let retryCount = 0;
+    let lastError: TomTomError | null = null;
+
+    while (retryCount < API_CONFIG.MAX_RETRIES) {
+      try {
+        const apiKey = import.meta.env.VITE_TOMTOM_API_KEY;
+        if (!apiKey) {
+          throw new Error('TomTom API key is missing');
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
+
+        // Primary endpoint - Places API fuzzy search
+        const baseUrl = 'https://api.tomtom.com/search/2/search';
+        
+        const params = new URLSearchParams({
+          key: apiKey,
+          limit: '8',
+          countrySet: 'US',
+          language: 'en-US',
+          fuzzySearch: 'true',
+          idxSet: 'Str,PAD,Addr',
+          entityTypeSet: 'Address,Street',
+          timeZone: 'America/Chicago',
+          minFuzzyLevel: '1',
+          maxFuzzyLevel: '2'
+        });
+
+        // Add location bias if user location is available
+        if (userLocation) {
+          params.append('lat', userLocation.lat.toString());
+          params.append('lon', userLocation.lon.toString());
+          params.append('radius', '50000'); // 50km radius
+        }
+        
+        const url = `${baseUrl}/${encodeURIComponent(query)}.json?${params.toString()}`;
+        const response = await fetch(url, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.errorText || `API Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.results || !Array.isArray(data.results)) {
+          throw new Error('Invalid response format');
+        }
+
+        // Process and filter results with improved scoring
+        const filteredResults = data.results
+          .filter(result => {
+            if (!result.address || !result.position) return false;
+            if (!result.address.countrySubdivision) return false;
+            if (result.score < API_CONFIG.MIN_SCORE) return false;
+            return true;
+          })
+          .map(result => ({
+            ...result,
+            address: {
+              ...result.address,
+              freeformAddress: result.address.freeformAddress
+                .replace(/, United States$/, '')
+                .replace(/^USA,\s*/, '')
+            }
+          }))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 8);
+
+        setResults(filteredResults);
+        return;
+
+      } catch (error: any) {
+        console.error(`Address search error (attempt ${retryCount + 1}):`, error);
+        lastError = classifyError(error);
+        
+        if (!lastError.retryable) {
+          break;
+        }
+
+        retryCount++;
+        if (retryCount < API_CONFIG.MAX_RETRIES) {
+          await delay(API_CONFIG.RETRY_DELAY * retryCount);
+        }
       }
-
-      // Using the Places API fuzzy search endpoint
-      const baseUrl = 'https://api.tomtom.com/search/2/search';
-      
-      const params = new URLSearchParams({
-        key: apiKey,
-        limit: '8',
-        countrySet: 'US',
-        language: 'en-US',
-        fuzzySearch: 'true',
-        idxSet: 'Str,PAD,Addr',
-        entityTypeSet: 'Address,Street',
-        timeZone: 'America/Chicago'
-      });
-
-      // Add location bias if user location is available
-      if (userLocation) {
-        params.append('lat', userLocation.lat.toString());
-        params.append('lon', userLocation.lon.toString());
-        params.append('radius', '50000'); // 50km radius
-      }
-      
-      const url = `${baseUrl}/${encodeURIComponent(query)}.json?${params.toString()}`;
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.errorText || `API Error: ${response.status}`);
-      }
-
-      if (!data.results || !Array.isArray(data.results)) {
-        throw new Error('Invalid response format');
-      }
-
-      // Process and filter results
-      const filteredResults = data.results
-        .filter(result => {
-          if (!result.address || !result.position) return false;
-          if (!result.address.countrySubdivision) return false;
-          return true;
-        })
-        .map(result => ({
-          ...result,
-          address: {
-            ...result.address,
-            freeformAddress: result.address.freeformAddress
-              .replace(/, United States$/, '')
-              .replace(/^USA,\s*/, '')
-          }
-        }))
-        .slice(0, 8);
-
-      setResults(filteredResults);
-    } catch (error) {
-      console.error('Address search error:', error);
-      setError(error instanceof Error ? error.message : 'Failed to search addresses');
-      setResults([]);
-    } finally {
-      setIsLoading(false);
     }
+
+    // If all retries failed, set the final error
+    if (lastError) {
+      setError(lastError.message);
+      setResults([]);
+    }
+
+    setIsLoading(false);
+  }, [userLocation]);
   }, [userLocation]);
 
   React.useEffect(() => {
