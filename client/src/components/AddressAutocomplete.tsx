@@ -37,15 +37,6 @@ interface TomTomResult {
   };
 }
 
-interface TomTomResponse {
-  summary: {
-    totalResults: number;
-    offset: number;
-    fuzzyLevel: number;
-  };
-  results: TomTomResult[];
-}
-
 interface AddressAutocompleteProps {
   value: string;
   onChange: (value: string, position: { lat: number; lon: number } | null) => void;
@@ -65,7 +56,6 @@ export function AddressAutocomplete({
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [userLocation, setUserLocation] = React.useState<{ lat: number; lon: number } | null>(null);
-  const debounceTimer = React.useRef<NodeJS.Timeout>();
 
   // Get user's location if geolocation is enabled
   React.useEffect(() => {
@@ -90,89 +80,78 @@ export function AddressAutocomplete({
       return;
     }
 
+    setIsLoading(true);
+    setError(null);
+
     try {
-      setIsLoading(true);
-      console.log('Searching for:', query);
-      
       const apiKey = import.meta.env.VITE_TOMTOM_API_KEY;
-      
       if (!apiKey) {
-        throw new Error('TomTom API key is missing. Please check your environment configuration.');
+        throw new Error('TomTom API key is missing');
       }
 
-      // Using the TomTom Autocomplete API endpoint for better suggestions
-      const baseUrl = 'https://api.tomtom.com/search/2/autocomplete';
+      // Using the Places API fuzzy search endpoint
+      const baseUrl = 'https://api.tomtom.com/search/2/search';
       
       const params = new URLSearchParams({
         key: apiKey,
         limit: '8',
         countrySet: 'US',
         language: 'en-US',
-        typeahead: 'true',
-        view: 'Unified',
-        radius: '50000'  // 50km radius
+        fuzzySearch: 'true',
+        idxSet: 'Str,PAD,Addr',
+        entityTypeSet: 'Address,Street',
+        timeZone: 'America/Chicago'
       });
 
       // Add location bias if user location is available
       if (userLocation) {
         params.append('lat', userLocation.lat.toString());
         params.append('lon', userLocation.lon.toString());
-        params.append('radius', '50000'); // 50km radius for local results
+        params.append('radius', '50000'); // 50km radius
       }
       
       const url = `${baseUrl}/${encodeURIComponent(query)}.json?${params.toString()}`;
-      console.log('TomTom API request URL:', url);
-      
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
+      const response = await fetch(url);
+      const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.errorText || `API Error: ${response.status}`);
-        }
-
-        if (!data.results || !Array.isArray(data.results)) {
-          throw new Error('Invalid response format from TomTom API');
-        }
-
-        // Process and filter results
-        // Process and clean up the results
-        const filteredResults = data.results
-          .filter(result => {
-            if (!result.address || !result.position) return false;
-            if (result.type !== 'Address' && result.type !== 'Street' && result.type !== 'POI') return false;
-            return true;
-          })
-          .map(result => ({
-            ...result,
-            address: {
-              ...result.address,
-              // Clean up the address format
-              freeformAddress: result.address.freeformAddress
-                .replace(/, United States$/, '')
-                .replace(/^USA,\s*/, '')
-            }
-          }))
-          .slice(0, 8);
-
-        console.log('Processed locations:', filteredResults);
-        setResults(filteredResults);
-        setError(null);
-      } catch (error) {
-        console.error('TomTom API Error:', error);
-        const errorMessage = error instanceof Error 
-          ? error.message 
-          : 'Failed to fetch address suggestions';
-        setResults([]);
-        setError(errorMessage);
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error(data.errorText || `API Error: ${response.status}`);
       }
-    }, [userLocation]);
+
+      if (!data.results || !Array.isArray(data.results)) {
+        throw new Error('Invalid response format');
+      }
+
+      // Process and filter results
+      const filteredResults = data.results
+        .filter(result => {
+          if (!result.address || !result.position) return false;
+          if (!result.address.countrySubdivision) return false;
+          return true;
+        })
+        .map(result => ({
+          ...result,
+          address: {
+            ...result.address,
+            freeformAddress: result.address.freeformAddress
+              .replace(/, United States$/, '')
+              .replace(/^USA,\s*/, '')
+          }
+        }))
+        .slice(0, 8);
+
+      setResults(filteredResults);
+    } catch (error) {
+      console.error('Address search error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to search addresses');
+      setResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userLocation]);
 
   React.useEffect(() => {
-    // Don't search until we have at least 3 characters
-    if (searchValue.trim().length < 3) {
+    if (searchValue.length < 3) {
       setResults([]);
       setError(null);
       return;
@@ -180,14 +159,11 @@ export function AddressAutocomplete({
 
     const handler = setTimeout(() => {
       searchLocations(searchValue);
-    }, 300); // Reduced debounce time for better responsiveness
+    }, 300);
 
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => clearTimeout(handler);
   }, [searchValue, searchLocations]);
 
-  // Clear results when closing the popover
   React.useEffect(() => {
     if (!open) {
       setResults([]);
@@ -196,9 +172,8 @@ export function AddressAutocomplete({
   }, [open]);
 
   const handleSelect = (result: TomTomResult) => {
-    const selectedAddress = result.address.freeformAddress;
     onChange(
-      selectedAddress === value ? "" : selectedAddress,
+      result.address.freeformAddress,
       result.position ? { lat: result.position.lat, lon: result.position.lon } : null
     );
     setOpen(false);
@@ -232,21 +207,21 @@ export function AddressAutocomplete({
             <div className="flex items-center justify-center p-4">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span className="ml-2 text-sm text-muted-foreground">
-                Searching addresses...
+                Searching...
               </span>
             </div>
           ) : error ? (
             <CommandEmpty>
               <Alert variant="destructive">
-                <AlertDescription className="text-sm">{error}</AlertDescription>
+                <AlertDescription>{error}</AlertDescription>
               </Alert>
             </CommandEmpty>
-          ) : searchValue.length < 2 ? (
+          ) : searchValue.length < 3 ? (
             <CommandEmpty className="p-4 text-sm text-muted-foreground">
-              Enter at least 2 characters to search
+              Enter at least 3 characters to search
             </CommandEmpty>
           ) : results.length === 0 ? (
-            <CommandEmpty className="p-4">No matching addresses found</CommandEmpty>
+            <CommandEmpty>No addresses found</CommandEmpty>
           ) : (
             <CommandGroup className="max-h-[300px] overflow-auto">
               {results.map((result) => {
@@ -258,7 +233,7 @@ export function AddressAutocomplete({
                 
                 const secondaryText = [
                   address.municipality,
-                  'Texas',
+                  address.countrySubdivision,
                   address.postalCode
                 ].filter(Boolean).join(', ');
 
@@ -275,9 +250,11 @@ export function AddressAutocomplete({
                         <div className="font-medium truncate">
                           {mainText || address.freeformAddress}
                         </div>
-                        <div className="text-sm text-muted-foreground truncate">
-                          {secondaryText}
-                        </div>
+                        {secondaryText && (
+                          <div className="text-sm text-muted-foreground truncate">
+                            {secondaryText}
+                          </div>
+                        )}
                       </div>
                       <Check
                         className={cn(

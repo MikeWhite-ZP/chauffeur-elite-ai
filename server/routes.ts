@@ -244,7 +244,50 @@ function setupBookingRoutes(app: Express) {
 
     try {
       const [booking] = await db
-        .select()
+        .select({
+          id: bookings.id,
+          tripId: bookings.tripId,
+          userId: bookings.userId,
+          accountId: bookings.accountId,
+          billingContact: bookings.billingContact,
+          companyName: bookings.companyName,
+          passengerFirstName: bookings.passengerFirstName,
+          passengerLastName: bookings.passengerLastName,
+          passengerPhone: bookings.passengerPhone,
+          passengerEmail: bookings.passengerEmail,
+          poClientRef: bookings.poClientRef,
+          pickupDate: bookings.pickupDate,
+          pickupTime: bookings.pickupTime,
+          pickupLocation: bookings.pickupLocation,
+          dropoffLocation: bookings.dropoffLocation,
+          airportCode: bookings.airportCode,
+          airportName: bookings.airportName,
+          airlineCode: bookings.airlineCode,
+          airlineName: bookings.airlineName,
+          flightNumber: bookings.flightNumber,
+          tripNotes: bookings.tripNotes,
+          jobStatus: bookings.jobStatus,
+          additionalRequests: bookings.additionalRequests,
+          serviceType: bookings.serviceType,
+          vehicleType: bookings.vehicleType,
+          chauffeurId: bookings.chauffeurId,
+          vehicleId: bookings.vehicleId,
+          basePrice: bookings.basePrice,
+          gratuityFee: bookings.gratuityFee,
+          extraStopsFee: bookings.extraStopsFee,
+          discount: bookings.discount,
+          tolls: bookings.tolls,
+          parking: bookings.parking,
+          creditCardFee: bookings.creditCardFee,
+          grandTotal: bookings.grandTotal,
+          paymentsDeposits: bookings.paymentsDeposits,
+          totalDue: bookings.totalDue,
+          trackingEnabled: bookings.trackingEnabled,
+          lastKnownLatitude: bookings.lastKnownLatitude,
+          lastKnownLongitude: bookings.lastKnownLongitude,
+          lastLocationUpdate: bookings.lastLocationUpdate,
+          estimatedArrivalTime: bookings.estimatedArrivalTime
+        })
         .from(bookings)
         .where(eq(bookings.id, bookingId))
         .limit(1);
