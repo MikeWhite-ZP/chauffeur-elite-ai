@@ -94,82 +94,88 @@ export function AddressAutocomplete({
       setIsLoading(true);
       console.log('Searching for:', query);
       
-      const baseUrl = 'https://api.tomtom.com/search/2/search';
-      // Get API key from environment
-      const apiKey = import.meta.env.VITE_TOMTOM_API_KEY?.replace(/['"]/g, '');
+      const apiKey = import.meta.env.VITE_TOMTOM_API_KEY;
       
-      console.log('Debug - TomTom API Configuration:', {
-        hasApiKey: !!apiKey,
-        apiKeyLength: apiKey?.length,
-        keyFormat: apiKey ? 'Valid format' : 'Invalid format',
-        isDevelopment: import.meta.env.DEV
-      });
-      
-      if (!apiKey || apiKey === 'undefined' || apiKey === '${TOMTOM_API_KEY}') {
-        const errorMsg = 'TomTom API configuration error. The API key is not properly configured.';
-        console.error('TomTom API Key Error:', {
-          key: apiKey ? 'Present but invalid' : 'Missing',
-          env: import.meta.env.MODE
-        });
-        setError(errorMsg);
-        return;
+      if (!apiKey) {
+        throw new Error('TomTom API key is missing. Please check your environment configuration.');
       }
+
+      // Using the TomTom Fuzzy Search API endpoint
+      const baseUrl = 'https://api.tomtom.com/search/2/search';
       
       const params = new URLSearchParams({
         key: apiKey,
-        typeahead: 'true',
         limit: '8',
         countrySet: 'US',
-        entityTypeSet: 'Address,Street,POI',
         language: 'en-US',
-        idxSet: 'POI,PAD,Str',
+        extendedPostalCodesFor: 'Str',
         minFuzzyLevel: '1',
         maxFuzzyLevel: '2',
-        view: 'Unified'
+        idxSet: 'Str,Addr',
+        entityTypeSet: 'Address,Street,POI,Municipality',
+        timeZone: 'America/Chicago'
       });
 
       // Add location bias if user location is available
       if (userLocation) {
         params.append('lat', userLocation.lat.toString());
         params.append('lon', userLocation.lon.toString());
-        // Add a radius of 50km for better local results
-        params.append('radius', '50000');
+        params.append('radius', '50000'); // 50km radius for local results
       }
       
       const url = `${baseUrl}/${encodeURIComponent(query)}.json?${params.toString()}`;
       console.log('TomTom API request URL:', url);
       
-      const response = await fetch(url);
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`Failed to fetch locations: ${response.status} ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(data.errorText || `API Error: ${response.status}`);
+        }
+
+        if (!data.results || !Array.isArray(data.results)) {
+          throw new Error('Invalid response format from TomTom API');
+        }
+
+        // Process and filter results
+        const filteredResults = data.results
+          .filter(result => {
+            // Ensure result has required properties
+            if (!result.address || !result.position) return false;
+            
+            // Filter US addresses only
+            if (result.address.country !== 'United States') return false;
+            
+            // Ensure it has a proper score and address
+            return result.score >= 8 && result.address.freeformAddress;
+          })
+          .map(result => ({
+            ...result,
+            address: {
+              ...result.address,
+              // Clean up the address format
+              freeformAddress: result.address.freeformAddress
+                .replace(/, United States$/, '')
+                .replace(/^USA,\s*/, '')
+            }
+          }))
+          .slice(0, 8);
+
+        console.log('Processed locations:', filteredResults);
+        setResults(filteredResults);
+        setError(null);
+      } catch (error) {
+        console.error('TomTom API Error:', error);
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : 'Failed to fetch address suggestions';
+        setResults([]);
+        setError(errorMessage);
+      } finally {
+        setIsLoading(false);
       }
-
-      const data: TomTomResponse = await response.json();
-      console.log('Received locations:', data);
-      
-      // Filter out results with low scores and sort by relevance
-      const filteredResults = data.results
-        .filter(result => result.score > 5)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 8);
-      
-      console.log('Filtered locations:', filteredResults);
-      setResults(filteredResults);
-    } catch (error) {
-      console.error('TomTom API Error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch addresses';
-      console.error('Detailed error:', errorMessage);
-      setResults([]);
-      
-      // Show a user-friendly error message in the dropdown
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userLocation]);
+    }, [userLocation]);
 
   React.useEffect(() => {
     const handler = setTimeout(() => {
@@ -230,15 +236,22 @@ export function AddressAutocomplete({
           {isLoading ? (
             <div className="flex items-center justify-center p-4">
               <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="ml-2 text-sm text-muted-foreground">
+                Searching addresses...
+              </span>
             </div>
           ) : error ? (
             <CommandEmpty>
               <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription className="text-sm">{error}</AlertDescription>
               </Alert>
             </CommandEmpty>
+          ) : searchValue.length < 2 ? (
+            <CommandEmpty className="p-4 text-sm text-muted-foreground">
+              Enter at least 2 characters to search
+            </CommandEmpty>
           ) : results.length === 0 ? (
-            <CommandEmpty>No address found in Texas.</CommandEmpty>
+            <CommandEmpty className="p-4">No matching addresses found</CommandEmpty>
           ) : (
             <CommandGroup className="max-h-[300px] overflow-auto">
               {results.map((result) => {
