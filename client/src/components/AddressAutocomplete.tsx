@@ -129,8 +129,11 @@ export function AddressAutocomplete({
       while (retryCount < API_CONFIG.MAX_RETRIES) {
         try {
           const apiKey = import.meta.env.VITE_TOMTOM_API_KEY;
-          if (!apiKey) {
-            throw new Error("TomTom API key is missing");
+          if (!apiKey || apiKey === "${TOMTOM_API_KEY}" || apiKey === "undefined") {
+            console.error("TomTom API key is missing or invalid");
+            setError("Location search is currently unavailable. Please try again later.");
+            setIsLoading(false);
+            return;
           }
 
           const controller = new AbortController();
