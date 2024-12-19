@@ -118,24 +118,25 @@ export function AddressAutocomplete({
       const params = new URLSearchParams({
         key: apiKey,
         typeahead: 'true',
-        limit: '10',
+        limit: '8',
         countrySet: 'US',
         entityTypeSet: 'Address,Street,POI',
         language: 'en-US',
+        idxSet: 'POI,PAD,Str',
+        minFuzzyLevel: '1',
+        maxFuzzyLevel: '2',
+        view: 'Unified'
       });
 
       // Add location bias if user location is available
       if (userLocation) {
         params.append('lat', userLocation.lat.toString());
         params.append('lon', userLocation.lon.toString());
-        console.log('Added location bias:', userLocation);
+        // Add a radius of 50km for better local results
+        params.append('radius', '50000');
       }
-
-      // Ensure Texas state filter
-      const searchQuery = query.toLowerCase().includes('texas') ? 
-        query : `${query}, Texas`;
       
-      const url = `${baseUrl}/${encodeURIComponent(searchQuery)}.json?${params.toString()}`;
+      const url = `${baseUrl}/${encodeURIComponent(query)}.json?${params.toString()}`;
       console.log('TomTom API request URL:', url);
       
       const response = await fetch(url);
@@ -149,13 +150,14 @@ export function AddressAutocomplete({
       const data: TomTomResponse = await response.json();
       console.log('Received locations:', data);
       
-      // Filter results to ensure they're in Texas
-      const texasResults = data.results.filter(result => 
-        result.address.countrySubdivision.toLowerCase() === 'texas'
-      );
+      // Filter out results with low scores and sort by relevance
+      const filteredResults = data.results
+        .filter(result => result.score > 5)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8);
       
-      console.log('Filtered Texas locations:', texasResults);
-      setResults(texasResults);
+      console.log('Filtered locations:', filteredResults);
+      setResults(filteredResults);
     } catch (error) {
       console.error('TomTom API Error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch addresses';
@@ -170,24 +172,27 @@ export function AddressAutocomplete({
   }, [userLocation]);
 
   React.useEffect(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    if (searchValue) {
-      debounceTimer.current = setTimeout(() => {
+    const handler = setTimeout(() => {
+      if (searchValue.trim().length >= 2) {
         searchLocations(searchValue);
-      }, 300); // Reduced debounce time for better responsiveness
-    } else {
-      setResults([]);
-    }
+      } else {
+        setResults([]);
+        setError(null);
+      }
+    }, 400);
 
     return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
+      clearTimeout(handler);
     };
   }, [searchValue, searchLocations]);
+
+  // Clear results when closing the popover
+  React.useEffect(() => {
+    if (!open) {
+      setResults([]);
+      setError(null);
+    }
+  }, [open]);
 
   const handleSelect = (result: TomTomResult) => {
     const selectedAddress = result.address.freeformAddress;
