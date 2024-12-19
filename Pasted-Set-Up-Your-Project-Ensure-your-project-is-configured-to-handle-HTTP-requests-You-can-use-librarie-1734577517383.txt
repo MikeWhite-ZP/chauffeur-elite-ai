@@ -1,0 +1,70 @@
+Set Up Your Project: Ensure your project is configured to handle HTTP requests. You can use libraries like axios or the native fetch API.
+
+Implement the Autocomplete Function: Create a function that sends user input to TomTom's Autocomplete API and processes the returned suggestions.
+
+Here's an example using the fetch API:
+
+const apiKey = 'YOUR_API_KEY';
+const baseUrl = 'https://api.tomtom.com/search/2/autocomplete';
+
+async function getAutocompleteSuggestions(query: string, lat?: number, lon?: number): Promise<any> {
+  const url = new URL(`${baseUrl}/${encodeURIComponent(query)}.json`);
+  url.searchParams.append('key', apiKey);
+  if (lat && lon) {
+    url.searchParams.append('lat', lat.toString());
+    url.searchParams.append('lon', lon.toString());
+  }
+
+  try {
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.results;
+  } catch (error) {
+    console.error('Failed to fetch autocomplete suggestions:', error);
+    return [];
+  }
+}
+
+This function constructs the request URL with the user's query and optional latitude and longitude for geolocation biasing. It then fetches the autocomplete suggestions and returns them.
+
+Handle User Input: Call the getAutocompleteSuggestions function as the user types, and display the suggestions in your UI.
+
+const inputElement = document.getElementById('autocomplete-input') as HTMLInputElement;
+const suggestionsContainer = document.getElementById('suggestions-container');
+
+inputElement.addEventListener('input', async () => {
+  const query = inputElement.value;
+  if (query.length > 2) { // Start searching after 3 characters
+    const suggestions = await getAutocompleteSuggestions(query);
+    displaySuggestions(suggestions);
+  } else {
+    clearSuggestions();
+  }
+});
+
+function displaySuggestions(suggestions: any[]) {
+  clearSuggestions();
+  suggestions.forEach(suggestion => {
+    const suggestionItem = document.createElement('div');
+    suggestionItem.textContent = suggestion.address.freeformAddress;
+    suggestionsContainer.appendChild(suggestionItem);
+  });
+}
+
+function clearSuggestions() {
+  suggestionsContainer.innerHTML = '';
+}
+
+This code listens for input events, fetches suggestions when the input length exceeds two characters, and displays them.
+
+Optional - Geolocation Biasing: To improve relevance, pass the user's current latitude and longitude to the getAutocompleteSuggestions function.
+
+    navigator.geolocation.getCurrentPosition((position) => {
+      const { latitude, longitude } = position.coords;
+      // Use latitude and longitude in getAutocompleteSuggestions
+    });
+
+For more detailed information, refer to the Autocomplete API Documentation.

@@ -100,20 +100,17 @@ export function AddressAutocomplete({
         throw new Error('TomTom API key is missing. Please check your environment configuration.');
       }
 
-      // Using the TomTom Fuzzy Search API endpoint
-      const baseUrl = 'https://api.tomtom.com/search/2/search';
+      // Using the TomTom Autocomplete API endpoint for better suggestions
+      const baseUrl = 'https://api.tomtom.com/search/2/autocomplete';
       
       const params = new URLSearchParams({
         key: apiKey,
         limit: '8',
         countrySet: 'US',
         language: 'en-US',
-        extendedPostalCodesFor: 'Str',
-        minFuzzyLevel: '1',
-        maxFuzzyLevel: '2',
-        idxSet: 'Str,Addr',
-        entityTypeSet: 'Address,Street,POI,Municipality',
-        timeZone: 'America/Chicago'
+        typeahead: 'true',
+        view: 'Unified',
+        radius: '50000'  // 50km radius
       });
 
       // Add location bias if user location is available
@@ -139,16 +136,12 @@ export function AddressAutocomplete({
         }
 
         // Process and filter results
+        // Process and clean up the results
         const filteredResults = data.results
           .filter(result => {
-            // Ensure result has required properties
             if (!result.address || !result.position) return false;
-            
-            // Filter US addresses only
-            if (result.address.country !== 'United States') return false;
-            
-            // Ensure it has a proper score and address
-            return result.score >= 8 && result.address.freeformAddress;
+            if (result.type !== 'Address' && result.type !== 'Street' && result.type !== 'POI') return false;
+            return true;
           })
           .map(result => ({
             ...result,
@@ -178,14 +171,16 @@ export function AddressAutocomplete({
     }, [userLocation]);
 
   React.useEffect(() => {
+    // Don't search until we have at least 3 characters
+    if (searchValue.trim().length < 3) {
+      setResults([]);
+      setError(null);
+      return;
+    }
+
     const handler = setTimeout(() => {
-      if (searchValue.trim().length >= 2) {
-        searchLocations(searchValue);
-      } else {
-        setResults([]);
-        setError(null);
-      }
-    }, 400);
+      searchLocations(searchValue);
+    }, 300); // Reduced debounce time for better responsiveness
 
     return () => {
       clearTimeout(handler);
