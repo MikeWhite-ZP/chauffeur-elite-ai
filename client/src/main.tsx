@@ -43,6 +43,7 @@ import { default as FirstClassSUV } from "./pages/fleet/first-class-suv";
 import Navigation from "./components/Navigation";
 import { Loader2 } from "lucide-react";
 import { useUser } from "./hooks/use-user";
+import OnboardingTutorial from "./components/OnboardingTutorial";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Service worker registration is temporarily disabled to address stability issues
@@ -62,6 +63,7 @@ function Router() {
   return (
     <>
       <Navigation user={user} />
+      {user && <OnboardingTutorial />}
       <Switch>
         <Route path="/" component={HomePage} />
         <Route path="/about/who-is-the-usa-luxury-limo" component={WhoIsUSALuxuryLimo} />
