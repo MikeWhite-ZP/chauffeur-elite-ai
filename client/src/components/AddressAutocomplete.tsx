@@ -129,12 +129,36 @@ export function AddressAutocomplete({
       while (retryCount < API_CONFIG.MAX_RETRIES) {
         try {
           const apiKey = import.meta.env.VITE_TOMTOM_API_KEY;
-          if (!apiKey || apiKey === "${TOMTOM_API_KEY}" || apiKey === "undefined") {
-            console.error("TomTom API key is missing or invalid");
-            setError("Location search is currently unavailable. Please try again later.");
+          const isDevelopment = import.meta.env.DEV;
+          
+          console.log("Searching for:", query);
+          console.log("Debug - TomTom API Configuration:", {
+            hasApiKey: !!apiKey,
+            keyFormat: apiKey ? "Valid format" : "Invalid format",
+            isDevelopment
+          });
+          
+          // Check if API key exists and has proper format
+          const isInvalidKey = !apiKey || 
+                             apiKey === "\"${TOMTOM_API_KEY}\"" || 
+                             apiKey === "undefined" || 
+                             apiKey === "${TOMTOM_API_KEY}" ||
+                             apiKey === '${TOMTOM_API_KEY}';
+                             
+          if (isInvalidKey) {
+            const errorDetails = {
+              key: "Missing or Invalid",
+              env: isDevelopment ? "development" : "production",
+              keyValue: apiKey
+            };
+            console.error("TomTom API Key Configuration Error:", errorDetails);
+            setError("Location search is currently unavailable. Please contact support.");
             setIsLoading(false);
             return;
           }
+
+          // Log successful API key configuration
+          console.log("TomTom API successfully configured");
 
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);

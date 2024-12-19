@@ -8,7 +8,7 @@ channel = "stable-24_05"
 [deployment]
 deploymentTarget = "cloudrun"
 build = ["npm", "run", "build"]
-run = ["sh", "-c", "npm run dev"]
+run = ["sh", "-c", "VITE_TOMTOM_API_KEY=\"$TOMTOM_API_KEY\" npm run dev"]
 
 [[ports]]
 localPort = 5000
@@ -50,7 +50,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "VITE_TOMTOM_API_KEY=\"$TOMTOM_API_KEY\" npm run dev"
 waitForPort = 5000
 
 [[workflows.workflow]]
