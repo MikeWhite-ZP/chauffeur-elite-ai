@@ -11,6 +11,7 @@ import {
   LogOut
 } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
+import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
 
 const menuItems = [
   {
@@ -81,8 +82,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </nav>
           </ScrollArea>
 
-          {/* Logout */}
-          <div className="p-4 border-t">
+          {/* Settings & Logout */}
+          <div className="p-4 border-t space-y-2">
+            <div className="flex items-center justify-between px-2">
+              <span className="text-sm text-muted-foreground">Customize</span>
+              <ThemeCustomizer />
+            </div>
             <Button
               variant="ghost"
               className="w-full justify-start text-left font-normal hover:bg-gray-100"
@@ -99,6 +104,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 overflow-auto">
         <main className="p-6">
           {children}
+          <ThemeCustomizer/>
         </main>
       </div>
     </div>

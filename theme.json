@@ -1,6 +1,30 @@
 {
-  "variant": "professional",
-  "primary": "oklch(70% 0.1 20)",
-  "appearance": "light",
-  "radius": 0.5
+  "themes": {
+    "default": {
+      "variant": "professional",
+      "primary": "oklch(70% 0.1 20)",
+      "secondary": "oklch(65% 0.15 40)",
+      "accent": "oklch(75% 0.12 30)",
+      "appearance": "light",
+      "radius": 0.5
+    },
+    "luxury": {
+      "variant": "elegant",
+      "primary": "oklch(30% 0.15 25)",
+      "secondary": "oklch(60% 0.1 40)",
+      "accent": "oklch(80% 0.08 45)",
+      "appearance": "dark",
+      "radius": 0.75
+    },
+    "modern": {
+      "variant": "minimal",
+      "primary": "oklch(50% 0.2 230)",
+      "secondary": "oklch(60% 0.15 250)",
+      "accent": "oklch(70% 0.1 220)",
+      "appearance": "system",
+      "radius": 1.0
+    }
+  },
+  "activeTheme": "default",
+  "customTheme": null
 }
