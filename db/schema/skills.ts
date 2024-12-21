@@ -25,6 +25,8 @@ export const driverSkills = pgTable('driver_skills', {
   category: skillCategoryEnum('category').notNull(),
   tier: skillTierEnum('tier').notNull(),
   xpRequired: integer('xp_required').notNull(),
+  experiencePoints: integer('experience_points').notNull().default(0),
+  levelProgress: integer('level_progress').notNull().default(0),
   icon: text('icon').notNull(),
   benefits: jsonb('benefits').notNull().$type<string[]>(),
   createdAt: timestamp('created_at').defaultNow(),

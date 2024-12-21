@@ -741,6 +741,89 @@ router.post("/skills/:skillId/unlock", async (req, res) => {
   }
 });
 
+// GET /api/driver/performance/predict
+router.get("/performance/predict", async (req, res) => {
+  try {
+    if (!req.isAuthenticated() || req.user?.role !== 'driver') {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const [chauffeur] = await db
+      .select()
+      .from(chauffeurs)
+      .where(eq(chauffeurs.userId, req.user.id))
+      .limit(1);
+
+    if (!chauffeur) {
+      return res.status(404).json({ error: "Driver not found" });
+    }
+
+    // Get historical performance data
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const performanceHistory = await db
+      .select({
+        rating: driverPerformanceMetrics.averageRating,
+        completedTrips: driverPerformanceMetrics.completedTrips,
+        onTimePercentage: driverPerformanceMetrics.onTimePercentage,
+        totalPoints: driverPerformanceMetrics.totalPoints,
+        currentStreak: driverPerformanceMetrics.currentStreak,
+        createdAt: driverPerformanceMetrics.lastUpdated,
+      })
+      .from(driverPerformanceMetrics)
+      .where(
+        and(
+          eq(driverPerformanceMetrics.chauffeurId, chauffeur.id),
+          gte(driverPerformanceMetrics.lastUpdated, thirtyDaysAgo)
+        )
+      )
+      .orderBy(driverPerformanceMetrics.lastUpdated);
+
+    // Import and use the DriverPerformancePredictor
+    const { DriverPerformancePredictor } = await import('../services/performance_prediction');
+    const predictor = new DriverPerformancePredictor();
+
+    // Prepare historical data for training
+    const trainingData = performanceHistory.map(record => ({
+      rating: Number(record.rating),
+      completedTrips: record.completedTrips || 0,
+      onTimePercentage: Number(record.onTimePercentage),
+      totalPoints: record.totalPoints || 0,
+      currentStreak: record.currentStreak || 0,
+      hour_of_day: record.createdAt?.getHours() || 0,
+      day_of_week: record.createdAt?.getDay() || 0,
+      month: record.createdAt?.getMonth() || 0,
+    }));
+
+    // Train the model for each metric
+    const metrics = ['rating', 'onTimePercentage', 'totalPoints'];
+    const predictions: Record<string, any> = {};
+
+    for (const metric of metrics) {
+      predictor.train(trainingData, metric);
+      
+      // Get current metrics for prediction
+      const currentMetrics = trainingData[trainingData.length - 1];
+      
+      // Make predictions
+      predictions[metric] = predictor.predict(currentMetrics, 24);
+    }
+
+    // Get feature importance for insights
+    const featureImportance = predictor.get_feature_importance();
+
+    res.json({
+      predictions,
+      featureImportance,
+      historicalData: performanceHistory
+    });
+  } catch (error) {
+    console.error("Error predicting driver performance:", error);
+    res.status(500).json({ error: "Failed to predict performance" });
+  }
+});
+
 export default router;
 
 interface Achievement {
