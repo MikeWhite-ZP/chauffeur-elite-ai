@@ -28,6 +28,11 @@ interface AchievementStats {
   totalPoints: number;
   currentStreak: number;
   bestStreak: number;
+  level: number;
+  totalXP: number;
+  currentLevelXP: number;
+  nextLevelXP: number;
+  xpToNextLevel: number;
   recentAchievements: Achievement[];
   upcomingAchievements: AchievementProgress[];
 }
@@ -64,6 +69,33 @@ export function DriverAchievementsWidget() {
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
+          {/* Level Progress */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h3 className="text-xl font-bold">Level {stats?.level || 1}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {stats?.currentLevelXP || 0} / {stats?.nextLevelXP || 100} XP
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Next Level</p>
+                <p className="text-sm font-medium">{stats?.xpToNextLevel || 0} XP needed</p>
+              </div>
+            </div>
+            <div className="w-full bg-accent/20 rounded-full h-3">
+              <div
+                className="bg-primary rounded-full h-3 transition-all"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    ((stats?.currentLevelXP || 0) / (stats?.nextLevelXP || 100)) * 100
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+
           {/* Achievement Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">

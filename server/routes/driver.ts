@@ -6,7 +6,66 @@ import type { SQL } from "drizzle-orm";
 
 const router = Router();
 
+interface XPRewards {
+  TRIP_COMPLETED: number;
+  FIVE_STAR_RATING: number;
+  ON_TIME_ARRIVAL: number;
+  ACHIEVEMENT_EARNED: number;
+  STREAK_MAINTAINED: number;
+}
+
+const XP_REWARDS: XPRewards = {
+  TRIP_COMPLETED: 50,
+  FIVE_STAR_RATING: 100,
+  ON_TIME_ARRIVAL: 30,
+  ACHIEVEMENT_EARNED: 200,
+  STREAK_MAINTAINED: 75,
+};
+
 const LEVEL_THRESHOLDS = [0, 100, 250, 500, 1000, 2000, 5000, 10000];
+
+async function calculateXPGain(chauffeurId: number, action: keyof XPRewards): Promise<number> {
+  const xpGain = XP_REWARDS[action];
+  
+  await db
+    .update(driverPerformanceMetrics)
+    .set({ 
+      experiencePoints: sql`${driverPerformanceMetrics.experiencePoints} + ${xpGain}`,
+      levelProgress: sql`${driverPerformanceMetrics.levelProgress} + ${xpGain}`,
+      lastUpdated: new Date()
+    })
+    .where(eq(driverPerformanceMetrics.chauffeurId, chauffeurId));
+    
+  return xpGain;
+}
+
+async function checkLevelUp(chauffeurId: number): Promise<boolean> {
+  const [metrics] = await db
+    .select()
+    .from(driverPerformanceMetrics)
+    .where(eq(driverPerformanceMetrics.chauffeurId, chauffeurId))
+    .limit(1);
+
+  if (!metrics) return false;
+
+  const currentLevel = metrics.currentLevel || 1;
+  const nextLevelThreshold = LEVEL_THRESHOLDS[currentLevel];
+  
+  if (metrics.levelProgress >= nextLevelThreshold) {
+    await db
+      .update(driverPerformanceMetrics)
+      .set({ 
+        currentLevel: sql`${driverPerformanceMetrics.currentLevel} + 1`,
+        levelProgress: 0,
+        lastUpdated: new Date()
+      })
+      .where(eq(driverPerformanceMetrics.chauffeurId, chauffeurId));
+    
+    return true;
+  }
+  
+  return false;
+}
 async function checkAndAwardAchievements(chauffeurId: number) {
   const [metrics] = await db
     .select()
@@ -55,7 +114,7 @@ async function checkAndAwardAchievements(chauffeurId: number) {
         .limit(1);
 
       if (!existingAward) {
-        // Award the achievement
+        // Award the achievement and XP
         await db.insert(driverEarnedAchievements).values({
           chauffeurId,
           achievementId: achievement.id,
@@ -63,7 +122,7 @@ async function checkAndAwardAchievements(chauffeurId: number) {
           earnedAt: new Date()
         });
 
-        // Update total points
+        // Update total points and award XP
         await db
           .update(driverPerformanceMetrics)
           .set({ 
@@ -71,6 +130,12 @@ async function checkAndAwardAchievements(chauffeurId: number) {
             lastUpdated: new Date()
           })
           .where(eq(driverPerformanceMetrics.chauffeurId, chauffeurId));
+          
+        // Award XP for achievement
+        await calculateXPGain(chauffeurId, 'ACHIEVEMENT_EARNED');
+        
+        // Check for level up
+        const leveledUp = await checkLevelUp(chauffeurId);
       }
     }
   }
@@ -318,6 +383,10 @@ router.get("/stats", async (req, res) => {
     const performanceHistory = await getDriverPerformanceHistory(chauffeur.id);
     console.log('Performance history fetched:', performanceHistory);
 
+    const nextLevelThreshold = LEVEL_THRESHOLDS[metrics.currentLevel || 1];
+    const xpProgress = metrics.levelProgress || 0;
+    const xpNeeded = nextLevelThreshold - xpProgress;
+
     res.json({
       upcomingAchievements,
       todayAssignments,
@@ -328,8 +397,11 @@ router.get("/stats", async (req, res) => {
       currentStreak: metrics.currentStreak ?? 0,
       bestStreak: metrics.bestStreak ?? 0,
       totalPoints: metrics.totalPoints ?? 0,
-      level,
-      nextLevelPoints,
+      level: metrics.currentLevel || 1,
+      totalXP: metrics.experiencePoints || 0,
+      currentLevelXP: xpProgress,
+      nextLevelXP: nextLevelThreshold,
+      xpToNextLevel: xpNeeded,
       recentAchievement,
       performanceTrends: performanceHistory,
     });
