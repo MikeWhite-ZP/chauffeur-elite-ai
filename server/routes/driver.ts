@@ -542,6 +542,205 @@ router.get("/achievements", async (req, res) => {
   }
 });
 
+// GET /api/driver/skills
+router.get("/skills", async (req, res) => {
+  try {
+    if (!req.isAuthenticated() || req.user?.role !== 'driver') {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const [chauffeur] = await db
+      .select()
+      .from(chauffeurs)
+      .where(eq(chauffeurs.userId, req.user.id))
+      .limit(1);
+
+    if (!chauffeur) {
+      return res.status(404).json({ error: "Driver not found" });
+    }
+
+    // Fetch all skills with their requirements
+    const skills = await db
+      .select({
+        id: driverSkills.id,
+        name: driverSkills.name,
+        description: driverSkills.description,
+        category: driverSkills.category,
+        tier: driverSkills.tier,
+        xpRequired: driverSkills.xpRequired,
+        icon: driverSkills.icon,
+        benefits: driverSkills.benefits,
+      })
+      .from(driverSkills);
+
+    // Fetch driver's progress for all skills
+    const progress = await db
+      .select()
+      .from(driverSkillProgress)
+      .where(eq(driverSkillProgress.chauffeurId, chauffeur.id));
+
+    // Fetch all skill requirements
+    const requirements = await db
+      .select({
+        skillId: skillRequirements.skillId,
+        requiredSkill: {
+          id: driverSkills.id,
+          name: driverSkills.name,
+        },
+      })
+      .from(skillRequirements)
+      .innerJoin(
+        driverSkills,
+        eq(skillRequirements.requiredSkillId, driverSkills.id)
+      );
+
+    // Organize skills by category
+    const skillTree = skills.reduce((acc, skill) => {
+      const skillProgress = progress.find(p => p.skillId === skill.id) || {
+        currentXp: 0,
+        isUnlocked: false,
+      };
+
+      const skillRequirements = requirements
+        .filter(r => r.skillId === skill.id)
+        .map(r => ({
+          id: r.requiredSkill.id,
+          name: r.requiredSkill.name,
+          isUnlocked: progress.some(
+            p => p.skillId === r.requiredSkill.id && p.isUnlocked
+          ),
+        }));
+
+      const category = acc.find(c => c.name === skill.category) || {
+        name: skill.category,
+        skills: [],
+      };
+
+      category.skills.push({
+        ...skill,
+        currentXp: skillProgress.currentXp,
+        isUnlocked: skillProgress.isUnlocked,
+        requirements: skillRequirements,
+      });
+
+      if (!acc.find(c => c.name === skill.category)) {
+        acc.push(category);
+      }
+
+      return acc;
+    }, [] as any[]);
+
+    res.json(skillTree);
+  } catch (error) {
+    console.error("Error fetching driver skills:", error);
+    res.status(500).json({ error: "Failed to fetch skills" });
+  }
+});
+
+// POST /api/driver/skills/:skillId/unlock
+router.post("/skills/:skillId/unlock", async (req, res) => {
+  try {
+    if (!req.isAuthenticated() || req.user?.role !== 'driver') {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const skillId = parseInt(req.params.skillId);
+    if (isNaN(skillId)) {
+      return res.status(400).json({ error: "Invalid skill ID" });
+    }
+
+    const [chauffeur] = await db
+      .select()
+      .from(chauffeurs)
+      .where(eq(chauffeurs.userId, req.user.id))
+      .limit(1);
+
+    if (!chauffeur) {
+      return res.status(404).json({ error: "Driver not found" });
+    }
+
+    // Check if the skill exists
+    const [skill] = await db
+      .select()
+      .from(driverSkills)
+      .where(eq(driverSkills.id, skillId))
+      .limit(1);
+
+    if (!skill) {
+      return res.status(404).json({ error: "Skill not found" });
+    }
+
+    // Check if the skill is already unlocked
+    const [progress] = await db
+      .select()
+      .from(driverSkillProgress)
+      .where(
+        and(
+          eq(driverSkillProgress.chauffeurId, chauffeur.id),
+          eq(driverSkillProgress.skillId, skillId)
+        )
+      )
+      .limit(1);
+
+    if (progress?.isUnlocked) {
+      return res.status(400).json({ error: "Skill already unlocked" });
+    }
+
+    // Check skill requirements
+    const requirements = await db
+      .select({
+        requiredSkillId: skillRequirements.requiredSkillId,
+      })
+      .from(skillRequirements)
+      .where(eq(skillRequirements.skillId, skillId));
+
+    if (requirements.length > 0) {
+      const unlockedRequirements = await db
+        .select()
+        .from(driverSkillProgress)
+        .where(
+          and(
+            eq(driverSkillProgress.chauffeurId, chauffeur.id),
+            eq(driverSkillProgress.isUnlocked, true)
+          )
+        );
+
+      const missingRequirements = requirements.filter(
+        req => !unlockedRequirements.some(ur => ur.skillId === req.requiredSkillId)
+      );
+
+      if (missingRequirements.length > 0) {
+        return res.status(400).json({ error: "Missing skill requirements" });
+      }
+    }
+
+    // Unlock the skill
+    if (progress) {
+      await db
+        .update(driverSkillProgress)
+        .set({
+          isUnlocked: true,
+          unlockedAt: new Date(),
+          lastUpdated: new Date(),
+        })
+        .where(eq(driverSkillProgress.id, progress.id));
+    } else {
+      await db.insert(driverSkillProgress).values({
+        chauffeurId: chauffeur.id,
+        skillId,
+        isUnlocked: true,
+        currentXp: 0,
+        unlockedAt: new Date(),
+      });
+    }
+
+    res.json({ message: "Skill unlocked successfully" });
+  } catch (error) {
+    console.error("Error unlocking skill:", error);
+    res.status(500).json({ error: "Failed to unlock skill" });
+  }
+});
+
 export default router;
 
 interface Achievement {
