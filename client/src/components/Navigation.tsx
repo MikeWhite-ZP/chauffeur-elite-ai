@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useUser } from "../hooks/use-user";
 import type { User } from "@db/schema";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -273,6 +274,9 @@ export default function Navigation({ user }: NavigationProps) {
                   </NavigationMenuItem>
                 )}
 
+                <NavigationMenuItem>
+                  <ThemeToggle />
+                </NavigationMenuItem>
                 {user ? (
                   <NavigationMenuItem>
                     <Button
