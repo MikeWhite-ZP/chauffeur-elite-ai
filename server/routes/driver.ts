@@ -824,6 +824,105 @@ router.get("/performance/predict", async (req, res) => {
   }
 });
 
+// POST /api/driver/coaching/advice
+router.post("/coaching/advice", async (req, res) => {
+  try {
+    if (!req.isAuthenticated() || req.user?.role !== 'driver') {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const [chauffeur] = await db
+      .select()
+      .from(chauffeurs)
+      .where(eq(chauffeurs.userId, req.user.id))
+      .limit(1);
+
+    if (!chauffeur) {
+      return res.status(404).json({ error: "Driver not found" });
+    }
+
+    // Get driver's current performance metrics
+    const [metrics] = await db
+      .select()
+      .from(driverPerformanceMetrics)
+      .where(eq(driverPerformanceMetrics.chauffeurId, chauffeur.id))
+      .limit(1);
+
+    if (!metrics) {
+      return res.status(404).json({ error: "Performance metrics not found" });
+    }
+
+    // Get recent achievements
+    const recentAchievements = await db
+      .select({
+        name: driverAchievements.name,
+        description: driverAchievements.description,
+      })
+      .from(driverEarnedAchievements)
+      .innerJoin(
+        driverAchievements,
+        eq(driverEarnedAchievements.achievementId, driverAchievements.id)
+      )
+      .where(eq(driverEarnedAchievements.chauffeurId, chauffeur.id))
+      .orderBy(desc(driverEarnedAchievements.earnedAt))
+      .limit(3);
+
+    // Get user name
+    const [user] = await db
+      .select({
+        fullName: users.fullName,
+      })
+      .from(users)
+      .where(eq(users.id, req.user.id))
+      .limit(1);
+
+    // Import and use the DriverCoachingChatbot
+    const { DriverCoachingChatbot } = await import('../services/coaching_chatbot');
+    const chatbot = new DriverCoachingChatbot();
+
+    const advice = await chatbot.getCoachingAdvice(
+      user.fullName,
+      {
+        rating: Number(metrics.averageRating) || 0,
+        onTimePercentage: Number(metrics.onTimePercentage) || 0,
+        completedTrips: metrics.completedTrips || 0,
+        currentStreak: metrics.currentStreak || 0,
+        totalPoints: metrics.totalPoints || 0,
+        recentAchievements
+      }
+    );
+
+    res.json(advice);
+  } catch (error) {
+    console.error("Error getting coaching advice:", error);
+    res.status(500).json({ error: "Failed to get coaching advice" });
+  }
+});
+
+// POST /api/driver/coaching/chat
+router.post("/coaching/chat", async (req, res) => {
+  try {
+    if (!req.isAuthenticated() || req.user?.role !== 'driver') {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { message } = req.body;
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    // Import and use the DriverCoachingChatbot
+    const { DriverCoachingChatbot } = await import('../services/coaching_chatbot');
+    const chatbot = new DriverCoachingChatbot();
+
+    const response = await chatbot.getChatResponse(message);
+    res.json({ message: response });
+  } catch (error) {
+    console.error("Error getting chat response:", error);
+    res.status(500).json({ error: "Failed to get chat response" });
+  }
+});
+
 export default router;
 
 interface Achievement {
