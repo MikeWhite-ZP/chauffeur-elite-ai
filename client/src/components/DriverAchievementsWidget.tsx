@@ -7,6 +7,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Loader2 } from "lucide-react";
+import { AnimatedAchievementMedal } from "./AnimatedAchievementMedal";
+import { AnimatedAchievementMedal } from './AnimatedAchievementMedal'; // Assumed import path
 
 interface Achievement {
   id: number;
@@ -157,14 +159,15 @@ export function DriverAchievementsWidget() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="relative group cursor-pointer">
-                        <div className="w-16 h-16 mx-auto bg-accent rounded-lg flex items-center justify-center">
-                          <span className="text-2xl">{achievement.badgeIcon}</span>
-                        </div>
-                        {achievement.earnedAt && (
-                          <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
-                            New!
-                          </div>
-                        )}
+                        <AnimatedAchievementMedal
+                          name={achievement.name}
+                          description={achievement.description}
+                          icon={achievement.badgeIcon}
+                          points={achievement.points}
+                          isNew={!!achievement.earnedAt}
+                          earnedAt={achievement.earnedAt}
+                          className="w-24 h-24"
+                        />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
