@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import driverRoutes from "./routes/driver";
+import configRoutes from "./routes/config";
 import { setupVite, serveStatic } from "./vite";
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
@@ -27,6 +28,9 @@ const app = express();
 // Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Configuration routes
+app.use('/api', configRoutes);
 
 // Simple request logging
 app.use((req: Request, res: Response, next: NextFunction) => {
