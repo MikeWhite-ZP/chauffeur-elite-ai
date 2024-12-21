@@ -269,6 +269,64 @@ router.get("/leaderboard", async (req, res) => {
   }
 });
 
+// GET /api/driver/achievements
+router.get("/achievements", async (req, res) => {
+  try {
+    if (!req.isAuthenticated() || req.user?.role !== 'driver') {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const [chauffeur] = await db
+      .select()
+      .from(chauffeurs)
+      .where(eq(chauffeurs.userId, req.user.id))
+      .limit(1);
+
+    if (!chauffeur) {
+      return res.status(404).json({ error: "Driver not found" });
+    }
+
+    // Fetch earned achievements for the driver
+    const earnedAchievements = await db
+      .select({
+        id: driverAchievements.id,
+        name: driverAchievements.name,
+        description: driverAchievements.description,
+        badgeIcon: driverAchievements.badgeIcon,
+        points: driverAchievements.points,
+        earnedAt: driverEarnedAchievements.earnedAt,
+      })
+      .from(driverEarnedAchievements)
+      .innerJoin(
+        driverAchievements,
+        eq(driverEarnedAchievements.achievementId, driverAchievements.id)
+      )
+      .where(eq(driverEarnedAchievements.chauffeurId, chauffeur.id))
+      .orderBy(desc(driverEarnedAchievements.earnedAt))
+      .limit(6);
+
+    // Get performance metrics to calculate totals
+    const [metrics] = await db
+      .select()
+      .from(driverPerformanceMetrics)
+      .where(eq(driverPerformanceMetrics.chauffeurId, chauffeur.id))
+      .limit(1);
+
+    const achievementStats = {
+      totalAchievements: earnedAchievements.length,
+      totalPoints: metrics?.totalPoints || 0,
+      currentStreak: metrics?.currentStreak || 0,
+      bestStreak: metrics?.bestStreak || 0,
+      recentAchievements: earnedAchievements,
+    };
+
+    res.json(achievementStats);
+  } catch (error) {
+    console.error("Error fetching driver achievements:", error);
+    res.status(500).json({ error: "Failed to fetch achievements" });
+  }
+});
+
 export default router;
 
 interface Achievement {

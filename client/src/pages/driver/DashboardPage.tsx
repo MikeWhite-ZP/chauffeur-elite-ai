@@ -4,6 +4,7 @@ import { Car, Star, Calendar, MapPin, Award, Flame, TrendingUp } from "lucide-re
 import { Progress } from "@/components/ui/progress";
 import { WellnessScoreWidget } from "@/components/WellnessScoreWidget";
 import { SparklineGraph } from "@/components/SparklineGraph";
+import { DriverAchievementsWidget } from "@/components/DriverAchievementsWidget";
 
 interface WellnessMetrics {
   hoursWorkedToday: number;
@@ -165,6 +166,8 @@ export default function DriverDashboard() {
       </Card>
 
       {wellnessMetrics && <WellnessScoreWidget metrics={wellnessMetrics} className="mb-6" />}
+      
+      <DriverAchievementsWidget />
       
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (
