@@ -15,6 +15,8 @@ interface Vehicle {
   isActive: boolean;
 }
 
+import { FleetInsightsWidget } from "@/components/FleetInsightsWidget";
+
 export default function FleetManagement() {
   const { data: vehicles, isLoading, refetch } = useQuery<Vehicle[]>({
     queryKey: ["fleet"],
@@ -61,7 +63,8 @@ export default function FleetManagement() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 space-y-6">
+      <FleetInsightsWidget />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Fleet Management</CardTitle>
