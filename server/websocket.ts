@@ -21,7 +21,7 @@ interface WebSocketError extends Error {
 }
 
 // Message type definitions
-type MessageType = 'init' | 'subscribe_tracking' | 'location_update' | 'ping' | 'pong' | 'error' | 'connection_established' | 'init_success' | 'subscribe_success' | 'location_update_ack';
+type MessageType = 'init' | 'subscribe_tracking' | 'location_update' | 'ping' | 'pong' | 'error' | 'connection_established' | 'init_success' | 'subscribe_success' | 'location_update_ack' | 'leaderboard_update';
 
 interface BaseMessage {
   type: MessageType;
@@ -363,6 +363,54 @@ function cleanupStaleConnections() {
       clients.delete(ws);
       console.log("Cleaned up stale connection for user:", client.userId);
     }
+  }
+}
+
+// Broadcast leaderboard updates to all connected clients
+export async function broadcastLeaderboardUpdate() {
+  try {
+    // Fetch latest leaderboard data from database
+    const leaderboard = await db
+      .select({
+        chauffeurId: chauffeurs.id,
+        fullName: users.fullName,
+        totalPoints: driverPerformanceMetrics.totalPoints,
+        totalTrips: driverPerformanceMetrics.totalTrips,
+        completedTrips: driverPerformanceMetrics.completedTrips,
+        averageRating: driverPerformanceMetrics.averageRating,
+        currentStreak: driverPerformanceMetrics.currentStreak,
+        bestStreak: driverPerformanceMetrics.bestStreak,
+      })
+      .from(driverPerformanceMetrics)
+      .innerJoin(chauffeurs, eq(driverPerformanceMetrics.chauffeurId, chauffeurs.id))
+      .innerJoin(users, eq(chauffeurs.userId, users.id))
+      .orderBy(driverPerformanceMetrics.totalPoints);
+
+    // Add rank to each driver
+    const rankedLeaderboard = leaderboard.map((driver, index) => ({
+      ...driver,
+      rank: index + 1,
+    }));
+
+    const message = JSON.stringify({
+      type: 'leaderboard_update',
+      data: rankedLeaderboard,
+    });
+
+    // Broadcast to all connected clients
+    const clientsArray = Array.from(clients.entries());
+    for (const [ws, client] of clientsArray) {
+      if (ws.readyState === WS.OPEN) {
+        try {
+          ws.send(message);
+        } catch (error) {
+          console.error('Failed to send leaderboard update:', error);
+          clients.delete(ws);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to broadcast leaderboard update:', error);
   }
 }
 
