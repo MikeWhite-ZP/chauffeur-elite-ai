@@ -17,12 +17,19 @@ interface Achievement {
   earnedAt?: string;
 }
 
+interface AchievementProgress {
+  achievement: Achievement;
+  progress: number;
+  required: number;
+}
+
 interface AchievementStats {
   totalAchievements: number;
   totalPoints: number;
   currentStreak: number;
   bestStreak: number;
   recentAchievements: Achievement[];
+  upcomingAchievements: AchievementProgress[];
 }
 
 export function DriverAchievementsWidget() {
@@ -74,6 +81,38 @@ export function DriverAchievementsWidget() {
             <div className="text-center">
               <p className="text-2xl font-bold">{stats?.bestStreak || 0}</p>
               <p className="text-sm text-muted-foreground">Best Streak</p>
+            </div>
+          </div>
+
+          {/* Upcoming Achievements */}
+          <div className="space-y-4">
+            <h3 className="font-medium">Upcoming Achievements</h3>
+            <div className="grid gap-4">
+              {stats?.upcomingAchievements?.map((progress) => (
+                <div key={progress.achievement.id} className="bg-card rounded-lg p-4 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center text-2xl">
+                      {progress.achievement.badgeIcon}
+                    </div>
+                    <div>
+                      <h4 className="font-medium">{progress.achievement.name}</h4>
+                      <p className="text-sm text-muted-foreground">{progress.achievement.description}</p>
+                    </div>
+                    <div className="ml-auto text-right">
+                      <p className="text-sm font-medium">{progress.achievement.points} pts</p>
+                      <p className="text-sm text-muted-foreground">
+                        {Math.round((progress.progress / progress.required) * 100)}%
+                      </p>
+                    </div>
+                  </div>
+                  <div className="w-full bg-accent/20 rounded-full h-2">
+                    <div
+                      className="bg-primary rounded-full h-2 transition-all"
+                      style={{ width: `${Math.min(100, (progress.progress / progress.required) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

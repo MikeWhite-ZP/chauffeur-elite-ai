@@ -7,6 +7,75 @@ import type { SQL } from "drizzle-orm";
 const router = Router();
 
 const LEVEL_THRESHOLDS = [0, 100, 250, 500, 1000, 2000, 5000, 10000];
+async function checkAndAwardAchievements(chauffeurId: number) {
+  const [metrics] = await db
+    .select()
+    .from(driverPerformanceMetrics)
+    .where(eq(driverPerformanceMetrics.chauffeurId, chauffeurId))
+    .limit(1);
+
+  if (!metrics) return;
+
+  const achievements = await db
+    .select()
+    .from(driverAchievements)
+    .where(eq(driverAchievements.isActive, true));
+
+  for (const achievement of achievements) {
+    const criteria = achievement.criteria as any;
+    let earned = false;
+
+    switch (criteria.type) {
+      case 'trips':
+        earned = metrics.completedTrips >= criteria.count;
+        break;
+      case 'rating':
+        earned = Number(metrics.averageRating) >= criteria.value;
+        break;
+      case 'ontime':
+        earned = Number(metrics.onTimePercentage) >= criteria.rate && 
+                metrics.completedTrips >= criteria.count;
+        break;
+      case 'streak':
+        earned = metrics.currentStreak >= criteria.days;
+        break;
+    }
+
+    if (earned) {
+      // Check if already earned
+      const [existingAward] = await db
+        .select()
+        .from(driverEarnedAchievements)
+        .where(
+          and(
+            eq(driverEarnedAchievements.chauffeurId, chauffeurId),
+            eq(driverEarnedAchievements.achievementId, achievement.id)
+          )
+        )
+        .limit(1);
+
+      if (!existingAward) {
+        // Award the achievement
+        await db.insert(driverEarnedAchievements).values({
+          chauffeurId,
+          achievementId: achievement.id,
+          pointsAwarded: achievement.points,
+          earnedAt: new Date()
+        });
+
+        // Update total points
+        await db
+          .update(driverPerformanceMetrics)
+          .set({ 
+            totalPoints: sql`${driverPerformanceMetrics.totalPoints} + ${achievement.points}`,
+            lastUpdated: new Date()
+          })
+          .where(eq(driverPerformanceMetrics.chauffeurId, chauffeurId));
+      }
+    }
+  }
+}
+
 async function getDriverPerformanceHistory(chauffeurId: number): Promise<PerformanceTrend> {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -56,6 +125,18 @@ async function getDriverPerformanceHistory(chauffeurId: number): Promise<Perform
 }
 
 // GET /api/driver/stats
+interface AchievementProgress {
+  achievement: {
+    id: number;
+    name: string;
+    description: string;
+    badgeIcon: string;
+    points: number;
+  };
+  progress: number;
+  required: number;
+}
+
 router.get("/stats", async (req, res) => {
   try {
     if (!req.isAuthenticated() || req.user?.role !== 'driver') {
@@ -171,12 +252,74 @@ router.get("/stats", async (req, res) => {
     const todayAssignments = todayAssignmentsResult[0]?.count || 0;
     console.log('Parsed assignments count:', todayAssignments);
 
+    // Check and award any new achievements
+    await checkAndAwardAchievements(chauffeur.id);
+
+    // Get upcoming achievements and progress
+    const upcomingAchievements: AchievementProgress[] = [];
+    const allAchievements = await db
+      .select()
+      .from(driverAchievements)
+      .where(eq(driverAchievements.isActive, true));
+
+    for (const achievement of allAchievements) {
+      const criteria = achievement.criteria as any;
+      let progress = 0;
+      let required = 0;
+
+      switch (criteria.type) {
+        case 'trips':
+          progress = metrics.completedTrips;
+          required = criteria.count;
+          break;
+        case 'rating':
+          progress = Number(metrics.averageRating) * 20; // Convert to percentage
+          required = criteria.value * 20;
+          break;
+        case 'ontime':
+          progress = Number(metrics.onTimePercentage);
+          required = criteria.rate;
+          break;
+        case 'streak':
+          progress = metrics.currentStreak;
+          required = criteria.days;
+          break;
+      }
+
+      // Only include unearned achievements
+      const [earned] = await db
+        .select()
+        .from(driverEarnedAchievements)
+        .where(
+          and(
+            eq(driverEarnedAchievements.chauffeurId, chauffeur.id),
+            eq(driverEarnedAchievements.achievementId, achievement.id)
+          )
+        )
+        .limit(1);
+
+      if (!earned) {
+        upcomingAchievements.push({
+          achievement: {
+            id: achievement.id,
+            name: achievement.name,
+            description: achievement.description,
+            badgeIcon: achievement.badgeIcon,
+            points: achievement.points
+          },
+          progress,
+          required
+        });
+      }
+    }
+
     // Fetch performance history
     console.log('Fetching performance history for chauffeur:', chauffeur.id);
     const performanceHistory = await getDriverPerformanceHistory(chauffeur.id);
     console.log('Performance history fetched:', performanceHistory);
 
     res.json({
+      upcomingAchievements,
       todayAssignments,
       rating: metrics.averageRating ? Number(metrics.averageRating) : 0,
       completedTrips: metrics.completedTrips ?? 0,
